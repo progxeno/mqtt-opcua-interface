@@ -1,0 +1,11 @@
+# TLS/SSL
+https://mcuoneclipse.com/2017/04/14/enable-secure-communication-with-tls-and-the-mosquitto-broker/
+
+sudo systemctl enable mosquitto.service
+mosquitto -d
+
+# Authentication & authorization
+https://www.loraserver.io/guides/mqtt-authentication/
+http://www.steves-internet-guide.com/mqtt-username-password-example/
+https://www.hivemq.com/blog/mqtt-security-fundamentals-authorization/
+https://neuendorf-online.de/posts/heimautomatisierung/mqtt-broker-mosquitto-installieren/

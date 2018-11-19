@@ -1,0 +1,14 @@
+# 1.1 Standard Setup of Toolchain for Windows
+https://dl.espressif.com/doc/esp-idf/latest/get-started/windows-setup.html
+
+# 1.2 Add IDF_PATH to User Profile
+https://docs.espressif.com/projects/esp-idf/en/latest/get-started/add-idf_path-to-profile.html
+
+# 2. Build and Flash with Eclipse IDE
+https://dl.espressif.com/doc/esp-idf/latest/get-started/eclipse-setup.html#eclipse-build-project
+
+# 3. Configure Eclipse IDE on Windows
+https://dl.espressif.com/doc/esp-idf/latest/get-started/eclipse-setup-windows.html#eclipse-windows-setup
+
+# Example
+https://exploreembedded.com/wiki/Setting_up_Eclipse_for_ESP-IDF
