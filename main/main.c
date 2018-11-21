@@ -21,7 +21,8 @@
 
 #include "../src/driver/mb1222.h"
 #include "../src/iot/rpi_mqtt.h"
-
+#include "../src/tls/certificate.h"
+#include "../src/tls/mqttMbedtls.h"
 
 void app_main()
 {

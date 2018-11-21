@@ -12,15 +12,19 @@
 #include <esp_mqtt.h>
 
 #include "cJSON.h"
+#include "../tls/mqttMbedtls.h"
+
+
 //#include "../driver/mb1222.h"
 
 #define WIFI_SSID "smc@iot"
 #define WIFI_PASS "12345678iot"
 
 #define MQTT_HOST "10.0.0.1"
-#define MQTT_PORT "8883"
+#define MQTT_PORT "1883"
 #define MQTT_USER "device"
 #define MQTT_PASS "device@mqtt"
+
 
 static bool status = true;
 
@@ -40,6 +44,7 @@ static void json_test()
             }
         ]
     }*/
+
     char *strJson = "{\"name\" : \"Mars\",\"mass\":639e21,\"moons\":[{\"name\":\"Phobos\",\"size\":70},{\"name\":\"Deimos\",\"size\":39}]}";
 
     printf("Planet:\n");
@@ -93,7 +98,6 @@ static void mqtt_process_task(void *p)
 	        } else {
 	            ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 	        }
-
 			json_test();
 		}
 	}

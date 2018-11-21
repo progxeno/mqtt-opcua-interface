@@ -17,6 +17,10 @@
 #ifndef DRIVER_MB1222_H_
 #define DRIVER_MB1222_H_
 
+#ifndef MQTT_USE_TLS
+	#define MQTT_USE_TLS
+#endif
+
 #include <driver/i2c.h>
 
 static const char *TAG = "i2c";
