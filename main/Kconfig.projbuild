@@ -1,14 +1,15 @@
-menu "Example Configuration"
+menu "MQTT Application sample"
 
-config BLINK_GPIO
-    int "Blink GPIO number"
-	range 0 34
-	default 5
-	help
-		GPIO number (IOxx) to blink on and off.
+config WIFI_SSID
+    string "WiFi SSID"
+    default "smc@iot"
+    help
+        SSID (network name) for the example to connect to.
 
-		Some GPIOs are used for other purposes (flash connections, etc.) and cannot be used to blink.
-
-		GPIOs 35-39 are input-only so cannot be used as outputs.
+config WIFI_PASSWORD
+    string "WiFi Password"
+    default "12345678iot"
+    help
+        WiFi password (WPA or WPA2) for the example to use.
 
 endmenu

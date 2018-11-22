@@ -23,6 +23,8 @@
 
 #include <driver/i2c.h>
 
+#include "esp_log.h"
+
 static const char *TAG = "i2c";
 
 #define I2C_MASTER_SCL_IO			22				/*!< gpio number for I2C master clock */
@@ -40,7 +42,7 @@ static const char *TAG = "i2c";
 #define ACK_VAL				0x0						/*!< I2C ack value */
 #define NACK_VAL			0x1						/*!< I2C nack value */
 
-
+static bool status = true;
 /**
  * @brief i2c master initialization
  */
