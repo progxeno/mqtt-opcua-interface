@@ -1,0 +1,9 @@
+
+
+Run mingw32.exe as administrator
+
+change directory to Gen_IDF_PATH.sh
+	cd /c/Users/%USERNAME%/eclipse-workspace/masterarbeit/tools/
+
+run 
+	sh Gen_IDF_PATH.sh
