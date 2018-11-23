@@ -1,0 +1,18 @@
+Troubleshooting:
+
+Problem:
+E (25725) esp-tls: mbedtls_ssl_handshake returned -0x2700
+I (25725) esp-tls: Failed to verify peer certificate!
+I (25735) esp-tls: verification info:   ! The certificate Common Name (CN) does not match with the expected CN
+
+E (25745) esp-tls: Failed to open new connection
+E (25745) TRANS_SSL: Failed to open a new connection
+E (25755) MQTT_CLIENT: Error transport connect
+I (25755) MQTT_CLIENT: Reconnect after 10000 ms
+I (25765) MQTTS_SAMPLE: MQTT_EVENT_DISCONNECTED
+
+Soulution:
+Change Common Name (CN) in SSl Certificate (ca.pem) to Ipadress
+	changed in generate-CA.sh line 69
+	
+	
