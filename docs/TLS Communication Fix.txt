@@ -13,6 +13,6 @@ I (25765) MQTTS_SAMPLE: MQTT_EVENT_DISCONNECTED
 
 Soulution:
 Change Common Name (CN) in SSl Certificate (ca.pem) to Ipadress
-	changed in generate-CA.sh line 69
+	changed in generate-CA.sh line 69 (22.11.2018)
 	
 	
