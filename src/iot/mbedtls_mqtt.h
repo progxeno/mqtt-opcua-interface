@@ -24,12 +24,6 @@
 #include "esp_system.h"
 #include "nvs_flash.h"
 
-#include "lwip/err.h"
-#include "lwip/sockets.h"
-#include "lwip/sys.h"
-#include "lwip/netdb.h"
-#include "lwip/dns.h"
-
 #include "mbedtls/platform.h"
 #include "mbedtls/net.h"
 #include "mbedtls/debug.h"
@@ -52,7 +46,7 @@
 /* The event group allows multiple bits for each event,
  but we only care about one event - are we connected
  to the AP with an IP? */
-const static int CONNECTED_BIT = BIT0;
+//const static int CONNECTED_BIT = BIT0;
 
 /* Constants that aren't configurable in menuconfig */
 #define MQTT_SERVER "raspberrypi"
@@ -60,7 +54,7 @@ const static int CONNECTED_BIT = BIT0;
 #define MQTT_PASS "device@mqtt"
 #define MQTT_PORT 8883
 #define MQTT_BUF_SIZE 1000
-#define MQTT_WEBSOCKET 0  // 0=no 1=yes
+#define MQTT_WEBSOCKET 1  // 0=no 1=yes
 
 static unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
 static unsigned char mqtt_readBuf[MQTT_BUF_SIZE];

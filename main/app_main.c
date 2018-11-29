@@ -13,12 +13,15 @@
 #include "freertos/queue.h"
 #include "freertos/event_groups.h"
 
-#include "../src/iot/mbedtls_mqtt.h"
-
 #include "esp_log.h"
 
+const static int CONNECTED_BIT = BIT0;
+#include "../src/iot/mbedtls_mqtt.h"
 #include "../src/iot/esp_mqtt.h"
+
 #include "mqtt_client.h"
+
+
 
 void app_main() {
 	ESP_LOGI(TAG, "[APP] Startup..");
@@ -33,9 +36,9 @@ void app_main() {
 	esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
 	nvs_flash_init();
-	// wifi_init();
-	initialise_wifi();
-	// mqtt_app_start();
-	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
+	wifi_init();
+	mqtt_app_start();
+//	initialise_wifi();
+//	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
 
 }
