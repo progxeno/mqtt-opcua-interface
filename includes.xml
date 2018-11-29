@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <cdtprojectproperties>
 <section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.IncludePaths">
-<language name="holder for library settings">
+<language name="Assembly Source File">
 
 </language>
-<language name="Assembly">
+<language name="C++ Source File">
 
 </language>
-<language name="GNU C++">
-
-</language>
-<language name="GNU C">
-<includepath workspace_path="true">/ESP32_mqtts_gpio/build/include</includepath>
+<language name="C Source File">
 <includepath>${IDF_PATH}/components/esp32/include</includepath>
 <includepath>${IDF_PATH}/components/freertos/include</includepath>
 <includepath>${IDF_PATH}/components/log/include</includepath>
@@ -19,7 +15,7 @@
 <includepath>${IDF_PATH}/components/nvs_flash/include</includepath>
 <includepath>${IDF_PATH}/components/driver/include</includepath>
 <includepath>${IDF_PATH}/components/spi_flash/include</includepath>
-<includepath>${IDF_PATH}/components/lwip/include/lwip/</includepath>
+<includepath>${IDF_PATH}/components/lwip/include/lwip</includepath>
 <includepath>${IDF_PATH}/components/esp32</includepath>
 <includepath>${IDF_PATH}/components/bt/include</includepath>
 <includepath>${IDF_PATH}/components/bt/bluedroid/include</includepath>
@@ -30,23 +26,24 @@
 <includepath>${IDF_PATH}/components/openssl/include</includepath>
 <includepath>${IDF_PATH}/components/tcpip_adapter/include</includepath>
 <includepath>${IDF_PATH}/components/micro-ecc</includepath>
-<includepath>${IDF_PATH}/../xtensa-esp32-elf/xtensa-esp32-elf/include</includepath>
-<includepath>${IDF_PATH}/../xtensa-esp32-elf/lib/gcc/xtensa-esp32-elf/5.2.0/include</includepath>
 <includepath>${IDF_PATH}/components/json</includepath>
+
+</language>
+<language name="Object File">
 
 </language>
 </section>
 <section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.Macros">
-<language name="holder for library settings">
+<language name="Assembly Source File">
 
 </language>
-<language name="Assembly">
+<language name="C++ Source File">
 
 </language>
-<language name="GNU C++">
+<language name="C Source File">
 
 </language>
-<language name="GNU C">
+<language name="Object File">
 
 </language>
 </section>

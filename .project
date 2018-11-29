@@ -22,5 +22,18 @@
 		<nature>org.eclipse.cdt.core.cnature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
+		<nature>org.eclipse.cdt.core.ccnature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>driver</name>
+			<type>2</type>
+			<location>C:/Users/Mario/masterarbeit/src/driver</location>
+		</link>
+		<link>
+			<name>iot</name>
+			<type>2</type>
+			<location>C:/Users/Mario/masterarbeit/src/iot</location>
+		</link>
+	</linkedResources>
 </projectDescription>

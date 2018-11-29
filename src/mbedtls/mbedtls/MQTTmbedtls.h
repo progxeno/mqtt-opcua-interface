@@ -1,12 +1,19 @@
-/*
- * mqttMbedtls.h
+/*******************************************************************************
+ * Copyright (c) 2014 IBM Corp.
  *
- *  Created on: 15.11.2018
- *      Author: Mario
- */
-
-#ifndef SRC_TLS_MQTTMBEDTLS_H_
-#define SRC_TLS_MQTTMBEDTLS_H_
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ *
+ * The Eclipse Public License is available at
+ *    http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at
+ *   http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * Contributors:
+ *    Allan Stockdill-Mander - initial API and implementation and/or initial documentation
+ *    pcbreflux - mbedtls implementation via tls and websocket
+ *******************************************************************************/
 
 #if !defined(MQTTmbedtls_H)
 #define MQTTmbedtls_H
@@ -23,9 +30,6 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
-
-#include "esp_system.h"
-#include "esp_heap_alloc_caps.h"
 
 //#include "mbedtls/config.h"
 #include "mbedtls/platform.h"
@@ -45,6 +49,8 @@
 
 #include "esp_system.h"
 #include "esp_log.h"
+
+#include "mqtt_uuid.h"
 
 #define WEBSOCKET_CONTINUATION 0x00
 #define WEBSOCKET_TEXT 0x01
@@ -86,8 +92,6 @@ typedef struct Network
     int mqtt_recv_offset;
     int mqtt_recv_len;
     uint8_t websocket;
-    uint8_t init;
-    uint8_t connect;
 
 	int (*mqttread) (struct Network*, unsigned char*, int, int);
 	int (*mqttwrite) (struct Network*, unsigned char*, int, int);
@@ -104,4 +108,3 @@ int NetworkYield(Network*);
 
 #endif
 
-#endif /* SRC_TLS_MQTTMBEDTLS_H_ */
