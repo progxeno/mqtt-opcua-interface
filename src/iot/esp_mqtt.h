@@ -16,6 +16,7 @@
 #include "../driver/mb1222.h"
 
 #include "esp_log.h"
+#include "mqtt_client.h"
 
 static EventGroupHandle_t wifi_event_group;
 //const static int CONNECTED_BIT = BIT0;
