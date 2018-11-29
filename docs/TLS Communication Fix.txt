@@ -12,7 +12,7 @@ I (25755) MQTT_CLIENT: Reconnect after 10000 ms
 I (25765) MQTTS_SAMPLE: MQTT_EVENT_DISCONNECTED
 
 Soulution:
-Change Common Name (CN) in SSl Certificate (ca.pem) to Ipadress
+Change Common Name (CN) in SSl Certificate (ca.pem) from HOSTNAME to IPADDESS
 	changed in generate-CA.sh line 69 (22.11.2018)
 	
 	
