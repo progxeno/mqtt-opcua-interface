@@ -48,6 +48,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/masterarbeit/build/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components\lwip\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/mbedtls/mbedtls/include/&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/mqtt/esp-mqtt/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/tcp_transport/include&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.940347507" superClass="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin"/>
 							</tool>
