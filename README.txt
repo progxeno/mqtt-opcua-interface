@@ -1,5 +1,5 @@
 1.
-Install msys like discribed in docs/msys Setup.rtf
+Install msys like discribed in docs/msys setup.rtf
 
 2.
 In Eclipse:
