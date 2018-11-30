@@ -18,6 +18,9 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 
+#define MQTT_USER "espMQTT"
+#define MQTT_PASS "esp"
+
 static EventGroupHandle_t wifi_event_group;
 //const static int CONNECTED_BIT = BIT0;
 
@@ -85,7 +88,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
 			if (ret == ESP_ERR_TIMEOUT) {
 				ESP_LOGE(TAG, "I2C Timeout");
 			} else if (ret == ESP_OK) {
-				esp_mqtt_client_publish(client, "/device/id1/data/range", buf,
+				esp_mqtt_client_publish(client, "device/id1/data", buf,
 						0, 0, 0);
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ",
@@ -100,7 +103,8 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
 static void mqtt_app_start(void) {
 	const esp_mqtt_client_config_t mqtt_cfg = { .host = "raspberrypi", .port =
 			8883, .event_handle = mqtt_event_handler, .transport =
-			MQTT_TRANSPORT_OVER_SSL, .cert_pem = (const char *) ca_pem_start, };
+			MQTT_TRANSPORT_OVER_SSL, .cert_pem = (const char *) ca_pem_start,
+			.username = MQTT_USER, .password = MQTT_PASS, .client_id = "ESP_MQTT", };
 
 	ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
 	esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);

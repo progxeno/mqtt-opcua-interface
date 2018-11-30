@@ -51,8 +51,8 @@
 
 /* Constants that aren't configurable in menuconfig */
 #define MQTT_SERVER "raspberrypi"
-#define MQTT_USER "device"
-#define MQTT_PASS "device@mqtt"
+#define MQTT_USER "mbedtls"
+#define MQTT_PASS "mbedtlsMQTT"
 #define MQTT_PORT 8883
 #define MQTT_BUF_SIZE 1000
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
@@ -129,7 +129,11 @@ static void mqtt_task(void *pvParameters) {
 			);
 
 	MQTTString clientId = MQTTString_initializer;
-	clientId.cstring = "ESP32MQTT";
+	clientId.cstring = "ESP32_MBEDTLS_MQTT";
+	MQTTString username = MQTTString_initializer;
+	username.cstring = MQTT_USER;
+	MQTTString password = MQTTString_initializer;
+	password.cstring = MQTT_PASS;
 
 	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
 	data.clientID = clientId;
@@ -137,6 +141,8 @@ static void mqtt_task(void *pvParameters) {
 	data.MQTTVersion = 4; // 3 = 3.1 4 = 3.1.1
 	data.keepAliveInterval = 60;
 	data.cleansession = 1;
+	data.username = username;
+	data.password = password;
 
 	ESP_LOGI(TAG, "MQTTConnect  ...");
 	ret = MQTTConnect(&client, &data);
@@ -163,7 +169,7 @@ static void mqtt_task(void *pvParameters) {
 			if (ret == ESP_ERR_TIMEOUT) {
 				ESP_LOGE(TAG, "I2C Timeout");
 			} else if (ret == ESP_OK) {
-				MQTTPublish(&client, "/test/test>", &message);
+				MQTTPublish(&client, "device/id1/data>", &message);
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ",
 						esp_err_to_name(ret));

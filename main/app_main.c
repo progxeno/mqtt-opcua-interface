@@ -20,7 +20,7 @@
  to the AP with an IP? */
 const static int CONNECTED_BIT = BIT0;
 
-#include "../src/iot/esp_mqtt.h"
+#include "../src/iot/esp_mqtt_tls.h"
 #include "../src/iot/mbedtls_mqtt.h"
 //#include "../src/iot/lw_mbedtls_mqtt.h"
 
@@ -39,10 +39,12 @@ void app_main() {
 	esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
 	nvs_flash_init();
+
+	//esp_mqtt!!
 	wifi_init();
 	mqtt_app_start();
 
-	initialise_wifi();
-	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
-
+	//mbedtls_mqtt!!
+//	initialise_wifi();
+//	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
 }

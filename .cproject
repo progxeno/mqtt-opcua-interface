@@ -36,7 +36,6 @@
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/spi_flash/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/esp32&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/bt/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/bt/bluedroid/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/bt/bluedroid/device/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/bt/bluedroid/stack/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/bt/bluedroid/bta/include&quot;"/>
@@ -50,6 +49,7 @@
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/mbedtls/mbedtls/include/&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/mqtt/esp-mqtt/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/tcp_transport/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/esp-mqtt/&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.940347507" superClass="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin"/>
 							</tool>

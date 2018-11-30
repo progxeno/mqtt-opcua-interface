@@ -11,11 +11,9 @@
 <includepath>${IDF_PATH}/components/esp32/include</includepath>
 <includepath>${IDF_PATH}/components/freertos/include</includepath>
 <includepath>${IDF_PATH}/components/log/include</includepath>
-<includepath>${IDF_PATH}/components/mbedtls/include</includepath>
 <includepath>${IDF_PATH}/components/nvs_flash/include</includepath>
 <includepath>${IDF_PATH}/components/driver/include</includepath>
 <includepath>${IDF_PATH}/components/spi_flash/include</includepath>
-<includepath>${IDF_PATH}/components/lwip/include/lwip</includepath>
 <includepath>${IDF_PATH}/components/esp32</includepath>
 <includepath>${IDF_PATH}/components/bt/include</includepath>
 <includepath>${IDF_PATH}/components/bt/bluedroid/include</includepath>
@@ -27,6 +25,11 @@
 <includepath>${IDF_PATH}/components/tcpip_adapter/include</includepath>
 <includepath>${IDF_PATH}/components/micro-ecc</includepath>
 <includepath>${IDF_PATH}/components/json</includepath>
+<includepath workspace_path="true">/masterarbeit/build/include</includepath>
+<includepath>${IDF_PATH}/components\lwip\include</includepath>
+<includepath>${IDF_PATH}/components/mbedtls/mbedtls/include/</includepath>
+<includepath>${IDF_PATH}/components/mqtt/esp-mqtt/include</includepath>
+<includepath>${IDF_PATH}/components/tcp_transport/include</includepath>
 
 </language>
 <language name="Object File">
