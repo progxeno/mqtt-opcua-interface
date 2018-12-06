@@ -1,3 +1,17 @@
+/*
+ * esp_mqtt_tls.h
+ *
+ *  Created on: 06.12.2018
+ *      Author: Mario
+ */
+
+#ifndef SRC_IOT_ESP_MQTT_TLS_H_
+#define SRC_IOT_ESP_MQTT_TLS_H_
+
+#if defined(__cplusplus) /* If this is a C++ compiler, use C linkage */
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -13,7 +27,7 @@
 #include "freertos/queue.h"
 #include "freertos/event_groups.h"
 
-#include "../driver/mb1222.h"
+#include "mb1222.h"
 
 #include "esp_log.h"
 #include "mqtt_client.h"
@@ -21,8 +35,14 @@
 #define MQTT_USER "espMQTT"
 #define MQTT_PASS "esp"
 
+/* The event group allows multiple bits for each event,
+ but we only care about one event - are we connected
+ to the AP with an IP? */
+const static int CONNECTED_BIT = BIT0;
 static EventGroupHandle_t wifi_event_group;
-//const static int CONNECTED_BIT = BIT0;
+
+extern const uint8_t ca_pem_start[] asm("_binary_ca_pem_start");
+extern const uint8_t ca_pem_end[] asm("_binary_ca_pem_end");
 
 static esp_err_t wifi_event_handler(void *ctx, system_event_t *event) {
 	switch (event->event_id) {
@@ -42,29 +62,6 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event) {
 	}
 	return ESP_OK;
 }
-
-static void wifi_init(void) {
-	tcpip_adapter_init();
-	wifi_event_group = xEventGroupCreate();
-	ESP_ERROR_CHECK(esp_event_loop_init(wifi_event_handler, NULL));
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	ESP_ERROR_CHECK (esp_wifi_set_storage(WIFI_STORAGE_RAM));wifi_config_t
-	wifi_config = { .sta = { .ssid = CONFIG_WIFI_SSID, .password =
-	CONFIG_WIFI_PASSWORD, }, };
-	ESP_ERROR_CHECK (esp_wifi_set_mode(WIFI_MODE_STA));ESP_ERROR_CHECK
-	(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-	ESP_LOGI(TAG, "start the WIFI SSID:[%s] password:[%s]", CONFIG_WIFI_SSID,
-			"******");
-	ESP_ERROR_CHECK (esp_wifi_start());ESP_LOGI
-	(TAG, "Waiting for wifi");
-	xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, false, true,
-			portMAX_DELAY);
-}
-
-extern const uint8_t ca_pem_start[] asm("_binary_ca_pem_start");
-extern const uint8_t ca_pem_end[] asm("_binary_ca_pem_end");
-
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
 
 	ESP_ERROR_CHECK(i2c_master_init());
@@ -88,8 +85,8 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
 			if (ret == ESP_ERR_TIMEOUT) {
 				ESP_LOGE(TAG, "I2C Timeout");
 			} else if (ret == ESP_OK) {
-				esp_mqtt_client_publish(client, "device/id1/data", buf,
-						0, 0, 0);
+				esp_mqtt_client_publish(client, "device/id1/data", buf, 0, 0,
+						0);
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ",
 						esp_err_to_name(ret));
@@ -100,13 +97,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
 	return ESP_OK;
 }
 
-static void mqtt_app_start(void) {
-	const esp_mqtt_client_config_t mqtt_cfg = { .host = "raspberrypi", .port =
-			8883, .event_handle = mqtt_event_handler, .transport =
-			MQTT_TRANSPORT_OVER_SSL, .cert_pem = (const char *) ca_pem_start,
-			.username = MQTT_USER, .password = MQTT_PASS, .client_id = "ESP_MQTT", };
+void wifi_init(void);
+void mqtt_app_start(void);
 
-	ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
-	esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
-	esp_mqtt_client_start(client);
-}
+#endif /* SRC_IOT_ESP_MQTT_TLS_H_ */

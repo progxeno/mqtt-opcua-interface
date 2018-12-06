@@ -15,14 +15,11 @@
 
 #include "esp_log.h"
 
-/* The event group allows multiple bits for each event,
- but we only care about one event - are we connected
- to the AP with an IP? */
-const static int CONNECTED_BIT = BIT0;
+#define esp "esp_mqtt_tls.h"
+#define mbedtls "mbedtls_mqtt.h"
+//#define lwmqtt "lw_mbedtls_mqtt.h"
 
-#include "../src/iot/esp_mqtt_tls.h"
-#include "../src/iot/mbedtls_mqtt.h"
-//#include "../src/iot/lw_mbedtls_mqtt.h"
+#include esp
 
 #include "mqtt_client.h"
 
@@ -40,11 +37,16 @@ void app_main() {
 
 	nvs_flash_init();
 
-	//esp_mqtt!!
+
+
 	wifi_init();
 	mqtt_app_start();
 
-	//mbedtls_mqtt!!
+
 //	initialise_wifi();
 //	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
+
+//		lw_initialise_wifi();
+//
+//		xTaskCreate(&lw_mqtt_task, "lw_mqtt_task", 16384, NULL, 5, NULL);
 }

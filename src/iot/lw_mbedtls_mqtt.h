@@ -8,6 +8,10 @@
 #ifndef SRC_IOT_LW_MBEDTLS_MQTT_H_
 #define SRC_IOT_LW_MBEDTLS_MQTT_H_
 
+#if defined(__cplusplus) /* If this is a C++ compiler, use C linkage */
+extern "C" {
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 #include "sdkconfig.h"
@@ -36,7 +40,8 @@
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 
-#include "../driver/mb1222.h"
+
+#include "mb1222.h"
 #include "esp_mqtt.h"
 /* The examples use simple WiFi configuration that you can set via
  'make menuconfig'.
@@ -51,9 +56,14 @@
 #define MQTT_SERVER "raspberrypi"
 #define MQTT_USER "mbedtls"
 #define MQTT_PASS "mbedtlsMQTT"
-#define MQTT_PORT 8883
+#define MQTT_PORT "8883"
 #define MQTT_BUF_SIZE 1000
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
+
+/* The event group allows multiple bits for each event,
+ but we only care about one event - are we connected
+ to the AP with an IP? */
+const static int CONNECTED_BIT = BIT0;
 
 static unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
 static unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
@@ -61,300 +71,64 @@ static unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t wifi_event_group;
 
-//int TLS_Connect(Network* n, char* addr, int port) {
-//    char portbuf[100];
-//    int ret, flags;
-//	int retVal = -1;
-//	int len;
-//
-//    mbedtls_ssl_init(&n->ssl);
-//    mbedtls_x509_crt_init(&n->cacert);
-//    mbedtls_ctr_drbg_init(&n->ctr_drbg);
-//    ESP_LOGD(TAG, "Seeding the random number generator");
-//
-//    mbedtls_ssl_config_init(&n->conf);
-//
-//    mbedtls_entropy_init(&n->entropy);
-//    if((ret = mbedtls_ctr_drbg_seed(&n->ctr_drbg, mbedtls_entropy_func, &n->entropy,
-//                                    NULL, 0)) != 0)
-//    {
-//        ESP_LOGE(TAG, "mbedtls_ctr_drbg_seed returned %d", ret);
-//        abort();
-//    }
-//
-//
-//    ESP_LOGD(TAG, "Loading the CA root certificate...");
-//
-//    ret = mbedtls_x509_crt_parse(&n->cacert, (uint8_t*)server_root_cert, strlen(server_root_cert)+1);
-//    if(ret < 0)
-//    {
-//        ESP_LOGE(TAG, "mbedtls_x509_crt_parse returned -0x%x\n\n", -ret);
-//        abort();
-//    }
-//
-//    ESP_LOGD(TAG, "Setting hostname for TLS session...");
-//
-//     /* Hostname set here should match CN in server certificate */
-//    if((ret = mbedtls_ssl_set_hostname(&n->ssl, addr)) != 0)
-//    {
-//        ESP_LOGE(TAG, "mbedtls_ssl_set_hostname returned -0x%x", -ret);
-//        abort();
-//    }
-//
-//    ESP_LOGD(TAG, "Setting up the SSL/TLS structure...");
-//
-//    if((ret = mbedtls_ssl_config_defaults(&n->conf,
-//                                          MBEDTLS_SSL_IS_CLIENT,
-//                                          MBEDTLS_SSL_TRANSPORT_STREAM,
-//                                          MBEDTLS_SSL_PRESET_DEFAULT)) != 0)
-//    {
-//        ESP_LOGE(TAG, "mbedtls_ssl_config_defaults returned %d", ret);
-//        goto exit;
-//    }
-//
-//    /* MBEDTLS_SSL_VERIFY_OPTIONAL is bad for security, in this example it will print
-//       a warning if CA verification fails but it will continue to connect.
-//
-//       You should consider using MBEDTLS_SSL_VERIFY_REQUIRED in your own code.
-//    */
-//    mbedtls_ssl_conf_authmode(&n->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
-//    // mbedtls_ssl_conf_authmode(&n->conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
-//    mbedtls_ssl_conf_ca_chain(&n->conf, &n->cacert, NULL);
-//    mbedtls_ssl_conf_rng(&n->conf, mbedtls_ctr_drbg_random, &n->ctr_drbg);
-//
-//#ifdef MBEDTLS_DEBUG_C
-//    mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL);
-//    mbedtls_ssl_conf_dbg(&n->conf, mbedtls_debug, NULL);
-//#endif
-//    if ((ret = mbedtls_ssl_setup(&n->ssl, &n->conf)) != 0)
-//    {
-//        ESP_LOGE(TAG, "mbedtls_ssl_setup returned -0x%x\n\n", -ret);
-//        goto exit;
-//    }
-//
-//	mbedtls_net_init(&n->server_fd);
-//
-//	sprintf(portbuf,"%d",port);
-//	ESP_LOGI(TAG, "Connecting to %s:%s...", addr, portbuf);
-//
-//	if ((ret = mbedtls_net_connect(&n->server_fd, addr,
-//								  portbuf, MBEDTLS_NET_PROTO_TCP)) != 0)
-//	{
-//		ESP_LOGE(TAG, "mbedtls_net_connect returned -%x", -ret);
-//		goto exit;
-//	}
-//
-//	ESP_LOGI(TAG, "Connected.");
-//
-//	ret = mbedtls_net_set_block(&n->server_fd);
-//
-//	mbedtls_ssl_set_bio(&n->ssl, &n->server_fd, mbedtls_net_send, mbedtls_net_recv, NULL);
-//
-//	ESP_LOGD(TAG, "Performing the SSL/TLS handshake...");
-//
-//	while ((ret = mbedtls_ssl_handshake(&n->ssl)) != 0)
-//	{
-//		if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
-//		{
-//			ESP_LOGE(TAG, "mbedtls_ssl_handshake returned -0x%x", -ret);
-//			goto exit;
-//		}
-//	}
-//
-//	ESP_LOGD(TAG, "Verifying peer X.509 certificate...");
-//
-//	if ((flags = mbedtls_ssl_get_verify_result(&n->ssl)) != 0)
-//	{
-//		/* In real life, we probably want to close connection if ret != 0 */
-//		ESP_LOGW(TAG, "Failed to verify peer certificate!");
-//		bzero(n->ws_recvbuf, sizeof(n->ws_recvbuf));
-//		mbedtls_x509_crt_verify_info((char *)n->ws_recvbuf, sizeof(n->ws_recvbuf), "  ! ", flags);
-//		ESP_LOGW(TAG, "verification info: %s", n->ws_recvbuf);
-//	}
-//	else {
-//		ESP_LOGD(TAG, "Certificate verified.");
-//	}
-//
-//	if (n->websocket) {
-//		// ToDo: generate random UUID i.e. Sec-WebSocket-Key use make gen_uuid all
-//		sprintf((char *)n->ws_sendbuf,"GET /mqtt HTTP/1.1\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nHost: %s:%d\r\nOrigin: https://%s:%d\r\nSec-WebSocket-Key: %s\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Protocol: mqtt\r\n\r\n",addr,port,addr,port,MBEDTLS_WEBSOCKET_UUID);
-//
-//		ESP_LOGD(TAG, "req=[%s]",n->ws_sendbuf);
-//
-//		while((ret = mbedtls_ssl_write(&n->ssl,n->ws_sendbuf,strlen((const char *)n->ws_sendbuf))) <= 0) {
-//			if(ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-//				ESP_LOGE(TAG, "mbedtls_ssl_write returned -0x%x", -ret);
-//				goto exit;
-//			}
-//		}
-//
-//		len = ret;
-//		ESP_LOGD(TAG, "%d bytes written", len);
-//		ESP_LOGD(TAG, "Reading HTTP response...");
-//
-//		do {
-//			bzero(n->ws_recvbuf, sizeof(n->ws_recvbuf));
-//			ret = mbedtls_ssl_read(&n->ssl, n->ws_recvbuf, MBEDTLS_WEBSOCKET_RECV_BUF_LEN-1);
-//
-//			if(ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
-//				continue;
-//			}
-//
-//			if(ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
-//				ESP_LOGD(TAG, "mbedtls_ssl_read returned -0x%x", -ret);
-//				ret = 0;
-//				break;
-//			}
-//
-//			if(ret < 0) {
-//				ESP_LOGE(TAG, "mbedtls_ssl_read returned -0x%x", -ret);
-//				break;
-//			}
-//
-//			if(ret == 0) {
-//				ESP_LOGD(TAG, "connection closed");
-//				break;
-//			}
-//
-//			len = ret;
-//			ESP_LOGD(TAG, "%d bytes read", len);
-//#if defined(MBEDTLS_MQTT_DEBUG)
-//			/* Print response directly to stdout as it is read */
-//			for(int i = 0; i < len; i++) {
-//				putchar(n->ws_recvbuf[i]);
-//			}
-//#endif
-//			break;
-//		} while(1);
-//
-//		if (strncmp((const char *)n->ws_recvbuf, "HTTP/1.1 101 Switching Protocols",32)!=0) {
-//			goto exit;
-//		}
-//
-//		unsigned char buf[512];
-//		unsigned char hash[20];
-//		size_t buflen;
-//
-//		memset(buf,0,sizeof(buf));
-//		sprintf((char *)buf,"%s%s",MBEDTLS_WEBSOCKET_UUID,"258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
-//		mbedtls_sha1(buf, strlen((const char*)buf), hash);
-//		mbedtls_base64_encode(buf, sizeof(buf), &buflen,hash, sizeof(hash));
-//#if defined(MBEDTLS_MQTT_DEBUG)
-//		printf("client hash %s\n",buf);
-//#endif
-//
-//		if(strstr((char *)n->ws_recvbuf, (char *)buf)==NULL) {
-//			ESP_LOGE(TAG, "WebSocket handshake error, Sec-WebSocket-Accept invalid");
-//			goto exit;
-//		}
-//
-//
-//
-//	}
-//	retVal = 0;
-//
-//	return retVal;
-//
-//exit:
-//	NetworkDisconnect(n);
-//
-//	return retVal;
-//}
-//
-//void TLS_Init(Network* n)
-//{
-//	n->ws_recv_offset=0;
-//	n->ws_recv_len=0;
-//	n->mqtt_recv_offset=0;
-//	n->mqtt_recv_len=0;
-//	n->mqttread=mqtt_mbedtls_read;
-//	n->mqttwrite=mqtt_mbedtls_write;
-//	n->websocket=0;
-//}
 
-static esp_err_t event_handler2(void *ctx, system_event_t *event) {
+
+static void status_callback(esp_mqtt_status_callback_t state) {
+
+	if (state)
+		ESP_LOGI(TAG, "mqtt connected\n");
+	else {
+		ESP_LOGI(TAG, "mqtt disconnected\n");
+		esp_mqtt_start(
+		MQTT_SERVER,
+		MQTT_PORT,
+		"LW_MQTT",
+		MQTT_USER,
+		MQTT_PASS);
+
+	}
+
+//	switch (state){
+//	case ESP_MQTT_STATUS_CONNECTED:
+//		ESP_LOGI(TAG, "MQTT Connected ...");
+//		break;
+//	case ESP_MQTT_STATUS_DISCONNECTED:
+//		ESP_LOGI(TAG, "MQTT Disconnected ...");
+//		esp_mqtt_start(
+//				MQTT_SERVER,
+//				MQTT_PORT,
+//				"lwmqtt",
+//				MQTT_USER,
+//				MQTT_PASS);
+//		break;
+}
+
+static void message_callback(const char *topic, uint8_t *payload, size_t len) {
+	ESP_LOGI(TAG, "incoming : %s => %s (%d)\n", topic, payload, (int) len);
+}
+static esp_err_t lw_event_handler(void *ctx, system_event_t *event) {
 	switch (event->event_id) {
-	case SYSTEM_EVENT_STA_START:
-		esp_wifi_connect();
-		break;
-	case SYSTEM_EVENT_STA_GOT_IP:
-		xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-		break;
-	case SYSTEM_EVENT_STA_DISCONNECTED:
-		/* This is a workaround as ESP32 WiFi libs don't currently
-		 auto-reassociate. */
-		esp_wifi_connect();
-		xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
-		break;
-	default:
-		break;
-	}
-	return ESP_OK;
-}
-
-static void initialise_wifi2(void) {
-	tcpip_adapter_init();
-	wifi_event_group = xEventGroupCreate();
-	ESP_ERROR_CHECK(esp_event_loop_init(event_handler2, NULL));
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	ESP_ERROR_CHECK (esp_wifi_set_storage(WIFI_STORAGE_RAM) );wifi_config_t
-	wifi_config = { .sta = { .ssid = WIFI_SSID, .password = WIFI_PASS, }, };
-	ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...",
-			wifi_config.sta.ssid);
-	ESP_ERROR_CHECK (esp_wifi_set_mode(WIFI_MODE_STA) );ESP_ERROR_CHECK
-	(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-	ESP_ERROR_CHECK (esp_wifi_start() );}
-
-static void mqtt_task2(void *pvParameters) {
-	Network network;
-	ESP_ERROR_CHECK(i2c_master_init());
-
-	int ret;
-	char buf[10];
-	uint8_t sensor_data_h, sensor_data_l;
-	uint16_t sensor_data;
-	/* Wait for the callback to set the CONNECTED_BIT in the
-	 event group.
-	 */
-	xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
-	false, true, portMAX_DELAY);
-	ESP_LOGI(TAG, "Connected to AP");
-
-	ESP_LOGI(TAG, "Start MQTT Task ...");
-
-	//MQTTClient client;
-	NetworkInit(&network);
-	network.websocket = MQTT_WEBSOCKET;
-
-	ESP_LOGI(TAG, "NetworkConnect %s:%d ...", MQTT_SERVER, MQTT_PORT);
-	NetworkConnect(&network, MQTT_SERVER, MQTT_PORT);
-
-
-	ESP_LOGI(TAG, "MQTTConnect  ...");
-	esp_mqtt_start("raspberrypi", "8883", "LWMQTT", "device", "device1");
-
-	while (1) {
-
-		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data_h,
-				&sensor_data_l);
-		sensor_data = (uint16_t) sensor_data_h << 8 | sensor_data_l;
-		sprintf(buf, "%u", sensor_data);
-
-		if (status) {
-			if (ret == ESP_ERR_TIMEOUT) {
-				ESP_LOGE(TAG, "I2C Timeout");
-			} else if (ret == ESP_OK) {
-				esp_mqtt_publish("test/test", (uint8_t *) buf, strlen(buf) + 1, 0, false);
-				//MQTTPublish(&client, "/test/test>", &message);
-
-//				esp_mqtt_publish("device/id1/data/range", (uint8_t *) buf, 10, 1, false);
-			} else {
-				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ",
-						esp_err_to_name(ret));
-			}
+		case SYSTEM_EVENT_STA_START:
+			esp_wifi_connect();
+			break;
+		case SYSTEM_EVENT_STA_GOT_IP:
+			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+			break;
+		case SYSTEM_EVENT_STA_DISCONNECTED:
+			/* This is a workaround as ESP32 WiFi libs don't currently
+			 auto-reassociate. */
+			esp_wifi_connect();
+			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
+			break;
+		default:
+			break;
 		}
+		return ESP_OK;
 	}
-}
+
+ void lw_initialise_wifi(void);
+
+
+ void lw_mqtt_task(void *pvParameters);
 
 #endif /* SRC_IOT_LW_MBEDTLS_MQTT_H_ */
