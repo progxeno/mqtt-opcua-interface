@@ -19,7 +19,7 @@
 #define mbedtls "mbedtls_mqtt.h"
 //#define lwmqtt "lw_mbedtls_mqtt.h"
 
-#include esp
+#include mbedtls
 
 #include "mqtt_client.h"
 
@@ -38,13 +38,15 @@ void app_main() {
 	nvs_flash_init();
 
 
-
+#ifdef SRC_IOT_ESP_MQTT_TLS_H_
 	wifi_init();
 	mqtt_app_start();
+#endif
 
-
-//	initialise_wifi();
-//	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
+#ifdef SRC_IOT_MBEDTLS_MQTT_H_
+	initialise_wifi();
+	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
+#endif
 
 //		lw_initialise_wifi();
 //
