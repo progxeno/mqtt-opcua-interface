@@ -28,6 +28,7 @@ extern "C" {
 #include "freertos/event_groups.h"
 
 #include "mb1222.h"
+#include "../driver/spi_3_wire.h"
 
 #include "esp_log.h"
 #include "mqtt_client.h"

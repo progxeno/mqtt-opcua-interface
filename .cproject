@@ -45,11 +45,14 @@
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/micro-ecc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/json&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/masterarbeit/build/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components\lwip\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/mbedtls/mbedtls/include/&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/mqtt/esp-mqtt/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/tcp_transport/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/esp-mqtt/&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/esp_event/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/soc/esp32/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/lwip/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/lwip/lwip/src/include&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.940347507" superClass="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin"/>
 							</tool>

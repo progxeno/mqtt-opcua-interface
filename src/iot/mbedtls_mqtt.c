@@ -13,7 +13,7 @@
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	ESP_ERROR_CHECK (esp_wifi_set_storage(WIFI_STORAGE_RAM) );wifi_config_t
-	wifi_config = { .sta = { .ssid = WIFI_SSID, .password = WIFI_PASS, }, };
+	wifi_config = { .sta = { .ssid = CONFIG_WIFI_SSID, .password = CONFIG_WIFI_PASSWORD, }, };
 	ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...",
 			wifi_config.sta.ssid);
 	ESP_ERROR_CHECK (esp_wifi_set_mode(WIFI_MODE_STA) );ESP_ERROR_CHECK
