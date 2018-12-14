@@ -27,8 +27,8 @@ extern "C" {
 #include "freertos/queue.h"
 #include "freertos/event_groups.h"
 
-#include "mb1222.h"
-#include "../driver/spi_3_wire.h"
+//#include "mb1222.h"
+#include "spi_3_wire.h"
 
 #include "esp_log.h"
 #include "mqtt_client.h"
@@ -65,36 +65,36 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event) {
 }
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
 
-	ESP_ERROR_CHECK(i2c_master_init());
-	esp_mqtt_client_handle_t client = event->client;
 
-	// your_context_t *context = event->context;
-	int ret;
-	char buf[10];
-	uint8_t sensor_data_h, sensor_data_l;
-	uint16_t sensor_data;
+	//ESP_ERROR_CHECK(spi_master_config());
+		esp_mqtt_client_handle_t client = event->client;
 
-	while (1) {
-		//fputs(status ? "true" : "false", stdout);
+		// your_context_t *context = event->context;
+		int ret = -1;
+		char buf[10];
+		uint16_t sensor_data_h, sensor_data_l;
+		uint16_t sensor_data;
 
-		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data_h,
-				&sensor_data_l);
-		sensor_data = (uint16_t) sensor_data_h << 8 | sensor_data_l;
-		sprintf(buf, "%u", sensor_data);
+		while (1) {
+			//fputs(status ? "true" : "false", stdout);
 
-		if (status) {
-			if (ret == ESP_ERR_TIMEOUT) {
-				ESP_LOGE(TAG, "I2C Timeout");
-			} else if (ret == ESP_OK) {
-				esp_mqtt_client_publish(client, "device/id1/data", buf, 0, 0,
-						0);
-			} else {
-				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ",
-						esp_err_to_name(ret));
+//			ret = spi_master_read_sensor(&sensor_data_h,
+//					&sensor_data_l);
+//			sensor_data = (uint16_t) sensor_data_h << 8 | sensor_data_l;
+//			sprintf(buf, "%u", sensor_data);
+
+			if (status) {
+				if (ret == ESP_ERR_TIMEOUT) {
+					ESP_LOGE(TAG, "I2C Timeout");
+				} else if (ret == ESP_OK) {
+					esp_mqtt_client_publish(client, "device/id1/data", buf, 0, 0,
+							0);
+				} else {
+					ESP_LOGW(TAG, "%s: No ack, sensor not connected. ",
+							esp_err_to_name(ret));
+				}
 			}
 		}
-	}
-
 	return ESP_OK;
 }
 
