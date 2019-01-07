@@ -39,8 +39,8 @@ void app_main() {
 
 
 #ifdef SRC_IOT_ESP_MQTT_TLS_H_
-//	wifi_init();
-//	mqtt_app_start();
+	wifi_init();
+	mqtt_app_start();
 	xTaskCreate(spi_process_task, "spi", 16384, NULL, 5, NULL);
 #endif
 
