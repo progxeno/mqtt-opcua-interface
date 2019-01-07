@@ -99,7 +99,7 @@
 		<buildTargets>
 			<target name="flash" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>python</buildCommand>
-				<buildArguments>${IDF_PATH}/tools/windows/eclipse_make.py -j8</buildArguments>
+				<buildArguments>${IDF_PATH}/tools/windows/eclipse_make.py -j</buildArguments>
 				<buildTarget>flash</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
