@@ -37,7 +37,6 @@ void app_main() {
 
 	nvs_flash_init();
 
-
 #ifdef SRC_IOT_ESP_MQTT_TLS_H_
 	wifi_init();
 	mqtt_app_start();

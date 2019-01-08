@@ -44,7 +44,6 @@ extern "C" {
 #include "mb1222.h"
 #include "MQTTClient.h"
 
-
 #define WIFI_SSID "smc@iot"
 #define WIFI_PASS "12345678iot"
 
@@ -55,39 +54,38 @@ extern "C" {
 #define MQTT_BUF_SIZE 1000
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
 
-/* The event group allows multiple bits for each event,
- but we only care about one event - are we connected
- to the AP with an IP? */
-const static int CONNECTED_BIT = BIT0;
+	/* The event group allows multiple bits for each event,
+	 but we only care about one event - are we connected
+	 to the AP with an IP? */
+	const static int CONNECTED_BIT = BIT0;
 
-static unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
-static unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
+	static unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
+	static unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
 
+	/* FreeRTOS event group to signal when we are connected & ready to make a request */
+	static EventGroupHandle_t wifi_event_group;
 
-/* FreeRTOS event group to signal when we are connected & ready to make a request */
-static EventGroupHandle_t wifi_event_group;
-
-static esp_err_t event_handler(void *ctx, system_event_t *event) {
-	switch (event->event_id) {
-	case SYSTEM_EVENT_STA_START:
-		esp_wifi_connect();
-		break;
-	case SYSTEM_EVENT_STA_GOT_IP:
-		xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-		break;
-	case SYSTEM_EVENT_STA_DISCONNECTED:
-		/* This is a workaround as ESP32 WiFi libs don't currently
-		 auto-reassociate. */
-		esp_wifi_connect();
-		xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
-		break;
-	default:
-		break;
+	static esp_err_t event_handler(void *ctx, system_event_t *event) {
+		switch (event->event_id) {
+			case SYSTEM_EVENT_STA_START:
+				esp_wifi_connect();
+				break;
+			case SYSTEM_EVENT_STA_GOT_IP:
+				xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+				break;
+			case SYSTEM_EVENT_STA_DISCONNECTED:
+				/* This is a workaround as ESP32 WiFi libs don't currently
+				 auto-reassociate. */
+				esp_wifi_connect();
+				xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
+				break;
+			default:
+				break;
+		}
+		return ESP_OK;
 	}
-	return ESP_OK;
-}
 
- void initialise_wifi(void);
- void mqtt_task(void *pvParameters);
+	void initialise_wifi(void);
+	void mqtt_task(void *pvParameters);
 
 #endif /* SRC_IOT_MBEDTLS_MQTT_H_ */

@@ -63,15 +63,23 @@ static esp_err_t spi_master_config(void) {
 
 	esp_err_t ret;
 	// Configuration for the SPI bus
-	spi_bus_config_t buscfg = { .mosi_io_num = -1, .miso_io_num = PIN_NUM_DATA,
-			.sclk_io_num = PIN_NUM_CLK, .quadwp_io_num = -1,
-			.quadhd_io_num = -1, .max_transfer_sz = SPI_MAX_DMA_LEN, };
+	spi_bus_config_t buscfg = {
+			.mosi_io_num = -1,
+			.miso_io_num = PIN_NUM_DATA,
+			.sclk_io_num = PIN_NUM_CLK,
+			.quadwp_io_num = -1,
+			.quadhd_io_num = -1,
+			.max_transfer_sz = SPI_MAX_DMA_LEN, };
 
 	// Configuration for the SPI master interface
-	spi_device_interface_config_t devcfg = { .clock_speed_hz = 40 * 1000 * 1000,
-			.mode = SPI_MODE, .spics_io_num = PIN_NUM_SS, .queue_size = 1,
+	spi_device_interface_config_t devcfg = {
+			.clock_speed_hz = 40 * 1000 * 1000,
+			.mode = SPI_MODE,
+			.spics_io_num = PIN_NUM_SS,
+			.queue_size = 1,
 			.flags = SPI_DEVICE_3WIRE, // | SPI_DEVICE_HALFDUPLEX,
-			.pre_cb = NULL, .post_cb = NULL, };
+			.pre_cb = NULL,
+			.post_cb = NULL, };
 
 	// Initialize and enable SPI
 
@@ -91,12 +99,15 @@ static esp_err_t spi_master_read_sensor(uint8_t *data, uint8_t *size) {
 	memset(&trans_t, 0, sizeof(trans_t));
 	memset(&trans_r, 0, sizeof(trans_r));
 	// Prepare transaction parameter
-	char cmd[] = { 0xAA, 0xFF };
-	char rxData[2] = {0};
+	char cmd[] = {
+			0xAA,
+			0xFF };
+	char rxData[2] = {
+			0 };
 
-	trans_t.length = 2*8;
+	trans_t.length = 2 * 8;
 	trans_t.tx_buffer = cmd;
-	trans_r.length = 2*8;
+	trans_r.length = 2 * 8;
 	trans_r.rx_buffer = rxData;
 
 	ret = spi_device_transmit(spi_handle, &trans_t);
@@ -170,8 +181,7 @@ static void spi_process_task(void *arg) {
 //				printf("\nsensor val: %i [cm]\n",
 //						sensor_data_h << 8 | sensor_data_l);
 		} else {
-			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...",
-					esp_err_to_name(ret));
+			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
 		}
 	}
 	vTaskDelete(NULL);

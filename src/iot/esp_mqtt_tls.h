@@ -37,37 +37,36 @@ extern "C" {
 #define MQTT_USER "espMQTT"
 #define MQTT_PASS "esp"
 
-/* The event group allows multiple bits for each event,
- but we only care about one event - are we connected
- to the AP with an IP? */
-const static int CONNECTED_BIT = BIT0;
-static EventGroupHandle_t wifi_event_group;
+	/* The event group allows multiple bits for each event,
+	 but we only care about one event - are we connected
+	 to the AP with an IP? */
+	const static int CONNECTED_BIT = BIT0;
+	static EventGroupHandle_t wifi_event_group;
 
-extern const uint8_t ca_pem_start[] asm("_binary_ca_pem_start");
-extern const uint8_t ca_pem_end[] asm("_binary_ca_pem_end");
+	extern const uint8_t ca_pem_start[] asm("_binary_ca_pem_start");
+	extern const uint8_t ca_pem_end[] asm("_binary_ca_pem_end");
 
-static esp_err_t wifi_event_handler(void *ctx, system_event_t *event) {
-	switch (event->event_id) {
-	case SYSTEM_EVENT_STA_START:
-		esp_wifi_connect();
-		break;
-	case SYSTEM_EVENT_STA_GOT_IP:
-		xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+	static esp_err_t wifi_event_handler(void *ctx, system_event_t *event) {
+		switch (event->event_id) {
+			case SYSTEM_EVENT_STA_START:
+				esp_wifi_connect();
+				break;
+			case SYSTEM_EVENT_STA_GOT_IP:
+				xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
 
-		break;
-	case SYSTEM_EVENT_STA_DISCONNECTED:
-		esp_wifi_connect();
-		xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
-		break;
-	default:
-		break;
+				break;
+			case SYSTEM_EVENT_STA_DISCONNECTED:
+				esp_wifi_connect();
+				xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
+				break;
+			default:
+				break;
+		}
+		return ESP_OK;
 	}
-	return ESP_OK;
-}
-static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
+	static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
 
-
-	//ESP_ERROR_CHECK(spi_master_config());
+		//ESP_ERROR_CHECK(spi_master_config());
 		esp_mqtt_client_handle_t client = event->client;
 
 		// your_context_t *context = event->context;
@@ -88,18 +87,16 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
 				if (ret == ESP_ERR_TIMEOUT) {
 					ESP_LOGE(TAG, "I2C Timeout");
 				} else if (ret == ESP_OK) {
-					esp_mqtt_client_publish(client, "device/id1/data", buf, 0, 0,
-							0);
+					esp_mqtt_client_publish(client, "device/id1/data", buf, 0, 0, 0);
 				} else {
-					ESP_LOGW(TAG, "%s: No ack, sensor not connected. ",
-							esp_err_to_name(ret));
+					ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 				}
 			}
 		}
-	return ESP_OK;
-}
+		return ESP_OK;
+	}
 
-void wifi_init(void);
-void mqtt_app_start(void);
+	void wifi_init(void);
+	void mqtt_app_start(void);
 
 #endif /* SRC_IOT_ESP_MQTT_TLS_H_ */

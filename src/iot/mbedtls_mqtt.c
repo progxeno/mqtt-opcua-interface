@@ -6,21 +6,25 @@
  */
 #include "mbedtls_mqtt.h"
 
- void initialise_wifi(void) {
+void initialise_wifi(void) {
 	tcpip_adapter_init();
 	wifi_event_group = xEventGroupCreate();
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	ESP_ERROR_CHECK (esp_wifi_set_storage(WIFI_STORAGE_RAM) );wifi_config_t
-	wifi_config = { .sta = { .ssid = CONFIG_WIFI_SSID, .password = CONFIG_WIFI_PASSWORD, }, };
-	ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...",
-			wifi_config.sta.ssid);
-	ESP_ERROR_CHECK (esp_wifi_set_mode(WIFI_MODE_STA) );ESP_ERROR_CHECK
-	(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-	ESP_ERROR_CHECK (esp_wifi_start() );}
 
- void mqtt_task(void *pvParameters) {
+	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+	wifi_config_t wifi_config = {
+			.sta = {
+					.ssid = CONFIG_WIFI_SSID,
+					.password = CONFIG_WIFI_PASSWORD, }, };
+	ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
+	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+	ESP_ERROR_CHECK(esp_wifi_start());
+}
+
+void mqtt_task(void *pvParameters) {
 	Network network;
 	ESP_ERROR_CHECK(i2c_master_init());
 
@@ -32,7 +36,8 @@
 	 event group.
 	 */
 	xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
-			false, true, portMAX_DELAY);
+	false,
+						true, portMAX_DELAY);
 	ESP_LOGI(TAG, "Connected to AP");
 
 	ESP_LOGI(TAG, "Start MQTT Task ...");
@@ -44,12 +49,7 @@
 	ESP_LOGI(TAG, "NetworkConnect %s:%d ...", MQTT_SERVER, MQTT_PORT);
 	NetworkConnect(&network, MQTT_SERVER, MQTT_PORT);
 	ESP_LOGI(TAG, "MQTTClientInit  ...");
-	MQTTClientInit(&client, &network, 2000,            // command_timeout_ms
-			mqtt_sendBuf,         //sendbuf,
-			MQTT_BUF_SIZE, //sendbuf_size,
-			mqtt_readBuf,         //readbuf,
-			MQTT_BUF_SIZE  //readbuf_size
-			);
+	MQTTClientInit(&client, &network, 2000, mqtt_sendBuf, MQTT_BUF_SIZE, mqtt_readBuf, MQTT_BUF_SIZE);
 
 	MQTTString clientId = MQTTString_initializer;
 	clientId.cstring = "MBEDTLS_MQTT";
@@ -74,8 +74,7 @@
 	}
 	while (1) {
 
-		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data_h,
-				&sensor_data_l);
+		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data_h, &sensor_data_l);
 		sensor_data = (uint16_t) sensor_data_h << 8 | sensor_data_l;
 		sprintf(buf, "%u", sensor_data);
 
@@ -94,8 +93,7 @@
 			} else if (ret == ESP_OK) {
 				MQTTPublish(&client, "device/id1/data", &message);
 			} else {
-				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ",
-						esp_err_to_name(ret));
+				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}
 		}
 	}

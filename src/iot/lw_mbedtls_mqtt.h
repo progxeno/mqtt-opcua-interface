@@ -40,19 +40,18 @@ extern "C" {
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 
-
 #include "mb1222.h"
 #include "esp_mqtt.h"
-/* The examples use simple WiFi configuration that you can set via
- 'make menuconfig'.
+	/* The examples use simple WiFi configuration that you can set via
+	 'make menuconfig'.
 
- If you'd rather not, just change the below entries to strings with
- the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
- */
+	 If you'd rather not, just change the below entries to strings with
+	 the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
+	 */
 #define WIFI_SSID "smc@iot"
 #define WIFI_PASS "12345678iot"
 
-/* Constants that aren't configurable in menuconfig */
+	/* Constants that aren't configurable in menuconfig */
 #define MQTT_SERVER "raspberrypi"
 #define MQTT_USER "mbedtls"
 #define MQTT_PASS "mbedtlsMQTT"
@@ -60,33 +59,30 @@ extern "C" {
 #define MQTT_BUF_SIZE 1000
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
 
-/* The event group allows multiple bits for each event,
- but we only care about one event - are we connected
- to the AP with an IP? */
-const static int CONNECTED_BIT = BIT0;
+	/* The event group allows multiple bits for each event,
+	 but we only care about one event - are we connected
+	 to the AP with an IP? */
+	const static int CONNECTED_BIT = BIT0;
 
-static unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
-static unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
+	static unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
+	static unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
 
-/* FreeRTOS event group to signal when we are connected & ready to make a request */
-static EventGroupHandle_t wifi_event_group;
+	/* FreeRTOS event group to signal when we are connected & ready to make a request */
+	static EventGroupHandle_t wifi_event_group;
 
+	static void status_callback(esp_mqtt_status_callback_t state) {
 
+		if (state)
+			ESP_LOGI(TAG, "mqtt connected\n");
+		else {
+			ESP_LOGI(TAG, "mqtt disconnected\n");
+			esp_mqtt_start(
+			MQTT_SERVER,
+							MQTT_PORT, "LW_MQTT",
+							MQTT_USER,
+							MQTT_PASS);
 
-static void status_callback(esp_mqtt_status_callback_t state) {
-
-	if (state)
-		ESP_LOGI(TAG, "mqtt connected\n");
-	else {
-		ESP_LOGI(TAG, "mqtt disconnected\n");
-		esp_mqtt_start(
-		MQTT_SERVER,
-		MQTT_PORT,
-		"LW_MQTT",
-		MQTT_USER,
-		MQTT_PASS);
-
-	}
+		}
 
 //	switch (state){
 //	case ESP_MQTT_STATUS_CONNECTED:
@@ -101,34 +97,33 @@ static void status_callback(esp_mqtt_status_callback_t state) {
 //				MQTT_USER,
 //				MQTT_PASS);
 //		break;
-}
+	}
 
-static void message_callback(const char *topic, uint8_t *payload, size_t len) {
-	ESP_LOGI(TAG, "incoming : %s => %s (%d)\n", topic, payload, (int) len);
-}
-static esp_err_t lw_event_handler(void *ctx, system_event_t *event) {
-	switch (event->event_id) {
-		case SYSTEM_EVENT_STA_START:
-			esp_wifi_connect();
-			break;
-		case SYSTEM_EVENT_STA_GOT_IP:
-			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-			break;
-		case SYSTEM_EVENT_STA_DISCONNECTED:
-			/* This is a workaround as ESP32 WiFi libs don't currently
-			 auto-reassociate. */
-			esp_wifi_connect();
-			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
-			break;
-		default:
-			break;
+	static void message_callback(const char *topic, uint8_t *payload, size_t len) {
+		ESP_LOGI(TAG, "incoming : %s => %s (%d)\n", topic, payload, (int) len);
+	}
+	static esp_err_t lw_event_handler(void *ctx, system_event_t *event) {
+		switch (event->event_id) {
+			case SYSTEM_EVENT_STA_START:
+				esp_wifi_connect();
+				break;
+			case SYSTEM_EVENT_STA_GOT_IP:
+				xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+				break;
+			case SYSTEM_EVENT_STA_DISCONNECTED:
+				/* This is a workaround as ESP32 WiFi libs don't currently
+				 auto-reassociate. */
+				esp_wifi_connect();
+				xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
+				break;
+			default:
+				break;
 		}
 		return ESP_OK;
 	}
 
- void lw_initialise_wifi(void);
+	void lw_initialise_wifi(void);
 
-
- void lw_mqtt_task(void *pvParameters);
+	void lw_mqtt_task(void *pvParameters);
 
 #endif /* SRC_IOT_LW_MBEDTLS_MQTT_H_ */

@@ -57,7 +57,8 @@ static esp_err_t i2c_master_init() {
 	conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
 	i2c_param_config(i2c_master_port, &conf);
 	return i2c_driver_install(i2c_master_port, conf.mode,
-	I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
+	I2C_MASTER_RX_BUF_DISABLE,
+								I2C_MASTER_TX_BUF_DISABLE, 0);
 }
 
 /**
@@ -73,8 +74,7 @@ static esp_err_t i2c_master_init() {
  * | start | slave_addr + rd_bit + ack | read 1 byte + ack  | read 1 byte + nack | stop |
  * --------|---------------------------|--------------------|--------------------|------|
  */
-static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint8_t *data_h,
-		uint8_t *data_l) {
+static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint8_t *data_h, uint8_t *data_l) {
 	int ret;
 	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 	i2c_master_start(cmd);
@@ -105,16 +105,13 @@ static void i2c_process_task(void *arg) {
 	uint8_t sensor_data_h, sensor_data_l;
 
 	while (1) {
-		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data_h,
-				&sensor_data_l);
+		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data_h, &sensor_data_l);
 		if (ret == ESP_ERR_TIMEOUT) {
 			ESP_LOGE(TAG, "I2C Timeout");
 		} else if (ret == ESP_OK) {
-			printf("\nsensor val: %i [cm]\n",
-					sensor_data_h << 8 | sensor_data_l);
+			printf("\nsensor val: %i [cm]\n", sensor_data_h << 8 | sensor_data_l);
 		} else {
-			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...",
-					esp_err_to_name(ret));
+			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
 		}
 	}
 	vTaskDelete (NULL);
