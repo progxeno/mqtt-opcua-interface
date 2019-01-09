@@ -7,24 +7,24 @@
 #include "mbedtls_mqtt.h"
 
 static esp_err_t event_handler(void *ctx, system_event_t *event) {
-		switch (event->event_id) {
-			case SYSTEM_EVENT_STA_START:
-				esp_wifi_connect();
-				break;
-			case SYSTEM_EVENT_STA_GOT_IP:
-				xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-				break;
-			case SYSTEM_EVENT_STA_DISCONNECTED:
-				/* This is a workaround as ESP32 WiFi libs don't currently
-				 auto-reassociate. */
-				esp_wifi_connect();
-				xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
-				break;
-			default:
-				break;
-		}
-		return ESP_OK;
+	switch (event->event_id) {
+		case SYSTEM_EVENT_STA_START:
+			esp_wifi_connect();
+			break;
+		case SYSTEM_EVENT_STA_GOT_IP:
+			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+			break;
+		case SYSTEM_EVENT_STA_DISCONNECTED:
+			/* This is a workaround as ESP32 WiFi libs don't currently
+			 auto-reassociate. */
+			esp_wifi_connect();
+			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
+			break;
+		default:
+			break;
 	}
+	return ESP_OK;
+}
 
 void initialise_wifi(void) {
 	tcpip_adapter_init();

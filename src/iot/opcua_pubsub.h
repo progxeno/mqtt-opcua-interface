@@ -42,17 +42,16 @@ static void parseTemperature(UA_Server *server, UA_NodeId nodeid);
 
 UA_NodeId connectionIdent, publishedDataSetIdent, writerGroupIdent;
 
- void addPubSubConnection(UA_Server *server);
- void addPublishedDataSet(UA_Server *server);
- void addDataSetField(UA_Server *server);
- void addWriterGroup(UA_Server *server);
- void addDataSetWriter(UA_Server *server);
- void parseTemperature(UA_Server *server, const UA_NodeId nodeid);
+void addPubSubConnection(UA_Server *server);
+void addPublishedDataSet(UA_Server *server);
+void addDataSetField(UA_Server *server);
+void addWriterGroup(UA_Server *server);
+void addDataSetWriter(UA_Server *server);
+void parseTemperature(UA_Server *server, const UA_NodeId nodeid);
 
 void opcua_task(void *pvParameter);
 static esp_err_t event_handler(void *ctx, system_event_t *event);
 
- void wifi_scan(void);
-
+void wifi_scan(void);
 
 #endif /* SRC_IOT_OPCUA_PUBSUB_H_ */
