@@ -44,8 +44,10 @@ extern "C" {
 #include "mb1222.h"
 #include "MQTTClient.h"
 
-#define WIFI_SSID "smc@iot"
-#define WIFI_PASS "12345678iot"
+#define DEFAULT_SSID "MasterarbeitPi"
+#define DEFAULT_PWD "MasterSMC2018"
+//#define DEFAULT_SSID "smc@iot"
+//#define DEFAULT_PWD "12345678iot"
 
 #define MQTT_SERVER "raspberrypi"
 #define MQTT_USER "mbedtls"
@@ -65,26 +67,7 @@ extern "C" {
 	/* FreeRTOS event group to signal when we are connected & ready to make a request */
 	static EventGroupHandle_t wifi_event_group;
 
-	static esp_err_t event_handler(void *ctx, system_event_t *event) {
-		switch (event->event_id) {
-			case SYSTEM_EVENT_STA_START:
-				esp_wifi_connect();
-				break;
-			case SYSTEM_EVENT_STA_GOT_IP:
-				xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-				break;
-			case SYSTEM_EVENT_STA_DISCONNECTED:
-				/* This is a workaround as ESP32 WiFi libs don't currently
-				 auto-reassociate. */
-				esp_wifi_connect();
-				xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
-				break;
-			default:
-				break;
-		}
-		return ESP_OK;
-	}
-
+	static esp_err_t event_handler(void *ctx, system_event_t *event);
 	void initialise_wifi(void);
 	void mqtt_task(void *pvParameters);
 

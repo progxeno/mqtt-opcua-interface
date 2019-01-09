@@ -34,6 +34,11 @@ extern "C" {
 #include "esp_log.h"
 #include "mqtt_client.h"
 
+#define DEFAULT_SSID "MasterarbeitPi"
+#define DEFAULT_PWD "MasterSMC2018"
+//#define DEFAULT_SSID "smc@iot"
+//#define DEFAULT_PWD "12345678iot"
+
 #define MQTT_USER "espMQTT"
 #define MQTT_PASS "esp"
 
@@ -46,55 +51,8 @@ extern "C" {
 	extern const uint8_t ca_pem_start[] asm("_binary_ca_pem_start");
 	extern const uint8_t ca_pem_end[] asm("_binary_ca_pem_end");
 
-	static esp_err_t wifi_event_handler(void *ctx, system_event_t *event) {
-		switch (event->event_id) {
-			case SYSTEM_EVENT_STA_START:
-				esp_wifi_connect();
-				break;
-			case SYSTEM_EVENT_STA_GOT_IP:
-				xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-
-				break;
-			case SYSTEM_EVENT_STA_DISCONNECTED:
-				esp_wifi_connect();
-				xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
-				break;
-			default:
-				break;
-		}
-		return ESP_OK;
-	}
-	static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
-
-		//ESP_ERROR_CHECK(spi_master_config());
-		esp_mqtt_client_handle_t client = event->client;
-
-		// your_context_t *context = event->context;
-		int ret = -1;
-		char buf[10];
-		uint16_t sensor_data_h, sensor_data_l;
-		uint16_t sensor_data;
-
-		while (1) {
-			//fputs(status ? "true" : "false", stdout);
-
-//			ret = spi_master_read_sensor(&sensor_data_h,
-//					&sensor_data_l);
-//			sensor_data = (uint16_t) sensor_data_h << 8 | sensor_data_l;
-//			sprintf(buf, "%u", sensor_data);
-
-			if (status) {
-				if (ret == ESP_ERR_TIMEOUT) {
-					ESP_LOGE(TAG, "I2C Timeout");
-				} else if (ret == ESP_OK) {
-					esp_mqtt_client_publish(client, "device/id1/data", buf, 0, 0, 0);
-				} else {
-					ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
-				}
-			}
-		}
-		return ESP_OK;
-	}
+	static esp_err_t wifi_event_handler(void *ctx, system_event_t *event);
+	static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event);
 
 	void wifi_init(void);
 	void mqtt_app_start(void);

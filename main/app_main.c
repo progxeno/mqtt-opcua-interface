@@ -17,9 +17,10 @@
 
 #define esp "esp_mqtt_tls.h"
 #define mbedtls "mbedtls_mqtt.h"
+#define opcuaPS "opcua_pubsub.h"
 //#define lwmqtt "lw_mbedtls_mqtt.h"
 
-#include esp
+#include opcuaPS
 
 #include "mqtt_client.h"
 
@@ -46,6 +47,10 @@ void app_main() {
 #ifdef SRC_IOT_MBEDTLS_MQTT_H_
 	initialise_wifi();
 	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
+#endif
+
+#ifdef SRC_IOT_OPCUA_PUBSUB_H_
+	wifi_scan();
 #endif
 
 //		lw_initialise_wifi();
