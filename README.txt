@@ -34,6 +34,11 @@ Check:
 		Compiler command pattern:
 			xtensa-esp32-elf-(g?cc)|([gc]\+\+)|(clang)
 
+Import:
+	Eclipse -> Project Properties -> Paths and Symbols
+		Includes Tab -> GNU C -> Import Settings...
+			Import the includes.xml in the local dir
+
 4. 
 Now you can Build the Project
 	Project -> Build Project
