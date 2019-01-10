@@ -46,7 +46,7 @@ void app_main() {
 
 #ifdef SRC_IOT_MBEDTLS_MQTT_H_
 	initialise_wifi();
-	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
+//	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
 #endif
 
 #ifdef SRC_IOT_OPCUA_PUBSUB_H_

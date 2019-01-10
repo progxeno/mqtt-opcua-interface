@@ -12,12 +12,13 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 			esp_wifi_connect();
 			break;
 		case SYSTEM_EVENT_STA_GOT_IP:
+			xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
 			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
 			break;
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			/* This is a workaround as ESP32 WiFi libs don't currently
 			 auto-reassociate. */
-			esp_wifi_connect();
+			ESP_ERROR_CHECK(esp_wifi_connect());
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			break;
 		default:

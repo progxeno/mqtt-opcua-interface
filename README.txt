@@ -2,6 +2,9 @@
 Install msys like discribed in docs/msys setup.rtf
 
 2.
+Copy content of folder "tools/components_libs" into the components folder in your IDF_PATH
+ 
+3.
 In Eclipse:
 	Click File -> Import
 		under C/C++ choose "Existing Code as Makefile Project" and click next
@@ -31,11 +34,11 @@ Check:
 		Compiler command pattern:
 			xtensa-esp32-elf-(g?cc)|([gc]\+\+)|(clang)
 
-3. 
+4. 
 Now you can Build the Project
 	Project -> Build Project
 
-4.
+5.
 To Flash ESP32:
 	Plugin the ESP32 and check the COM-Port in the Device Manager of Windows
 	If there is no COM-Port:

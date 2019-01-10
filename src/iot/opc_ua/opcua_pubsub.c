@@ -5,7 +5,7 @@
  *      Author: miosga.mario
  */
 
-#include "opcua_pubsub.h"
+#include "../opc_ua/opcua_pubsub.h"
 
 void addPubSubConnection(UA_Server *server) {
 	/* Details about the connection configuration and handling are located
@@ -185,15 +185,7 @@ void opcua_task(void *pvParameter) {
 	addDataSetWriter(server);
 
 	UA_Server_run(server, &running);
-	UA_Boolean waitInternal = false;
 
-//	while (running) {
-//		UA_UInt16 timeout = UA_Server_run_iterate(server, waitInternal);
-//		struct timeval tv;
-//		tv.tv_sec = 0;
-//		tv.tv_usec = timeout * 5000;
-//		select(0, NULL, NULL, NULL, &tv);
-//	}
 	ESP_LOGI(TAG, "Now going to stop the server.");
 	UA_Server_delete(server);
 	UA_ServerConfig_delete(config);
