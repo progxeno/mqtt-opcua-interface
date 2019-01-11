@@ -62,7 +62,7 @@ void opcua_task(void *pvParameter) {
 	vTaskDelete(NULL);
 }
 
-static void addTemperatureNode(UA_Server *server) {
+ void addTemperatureNode(UA_Server *server) {
 	UA_VariableAttributes attr = UA_VariableAttributes_default;
 	//TODO: Temperature value should be read with a cycle and parsed into variable attr value.
 	UA_Int32 ambientTemperature = temperature; //ReadTemperature(4);
@@ -108,7 +108,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 	return ESP_OK;
 }
 
-static void wifi_scan(void) {
+ void wifi_scan(void) {
 	tcpip_adapter_init();
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
@@ -127,16 +127,4 @@ static void wifi_scan(void) {
 	tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, "espressif");
 }
 
-void app_main() {
-
-	// Initialize NVS
-	esp_err_t ret = nvs_flash_init();
-	if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
-		ESP_ERROR_CHECK(nvs_flash_erase());
-		ret = nvs_flash_init();
-	}
-	ESP_ERROR_CHECK(ret);
-	wifi_scan();
-	//xTaskCreate(&opcua_task, "opcua_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
-}
 

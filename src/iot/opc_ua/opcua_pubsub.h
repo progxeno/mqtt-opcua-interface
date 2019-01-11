@@ -25,6 +25,8 @@ extern "C" {
 #include "esp_event_loop.h"
 #include "nvs_flash.h"
 
+#include "soc/sens_reg.h"
+
 #include <time.h>
 #include <unistd.h>
 #include <lwip/sockets.h>

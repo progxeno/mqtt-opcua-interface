@@ -59,6 +59,7 @@ void addDataSetField(UA_Server *server) {
 	dataSetFieldConfig.field.variable.publishParameters.publishedVariable = UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERSTATUS_CURRENTTIME);
 	dataSetFieldConfig.field.variable.publishParameters.attributeId = UA_ATTRIBUTEID_VALUE;
 	UA_Server_addDataSetField(server, publishedDataSetIdent, &dataSetFieldConfig, &dataSetFieldIdent);
+
 //	/* Add a field to the previous created PublishedDataSet */
 //	UA_NodeId createdNodeId;
 //	UA_VariableAttributes attr = UA_VariableAttributes_default;

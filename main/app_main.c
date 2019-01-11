@@ -21,7 +21,7 @@
 #define opcuaServer "opcua_server.h"
 //#define lwmqtt "lw_mbedtls_mqtt.h"
 
-#include opcuaServer
+#include opcuaPS
 
 #include "mqtt_client.h"
 

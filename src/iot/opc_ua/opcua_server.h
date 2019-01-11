@@ -31,7 +31,7 @@ extern "C" {
 #include "tcpip_adapter.h"
 #include "open62541.h"
 #include "DHT22.h"
-#include "myNodeSet.h"
+//#include "myNodeSet.h"
 
 #define DEFAULT_SSID "MasterarbeitPi"
 #define DEFAULT_PWD "MasterSMC2018"
@@ -41,24 +41,21 @@ extern "C" {
 #define TAG "OPC_UA_PUBSUB"
 #define BLINK_GPIO 1
 
-	UA_ServerConfig *config;
-	float temperature;
+UA_ServerConfig *config;
+float temperature;
 
-	static UA_Boolean running = true;
+static UA_Boolean running = true;
 
-	static void
-	addTemperatureNode(UA_Server *server);
+void
+addTemperatureNode(UA_Server *server);
 
-	void sensor_task(void *pvParameter);
+void sensor_task(void *pvParameter);
 
-	void opcua_task(void *pvParameter);
+void opcua_task(void *pvParameter);
 
-	static void addTemperatureNode(UA_Server *server);
+void addTemperatureNode(UA_Server *server);
 
-	static esp_err_t event_handler(void *ctx, system_event_t *event);
+static esp_err_t event_handler(void *ctx, system_event_t *event);
 
-	static void wifi_scan(void);
-
-	void app_main();
-
+void wifi_scan(void);
 #endif /* SRC_IOT_OPC_UA_OPCUA_SERVER_H_ */
