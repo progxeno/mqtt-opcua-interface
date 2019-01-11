@@ -18,9 +18,10 @@
 #define esp "esp_mqtt_tls.h"
 #define mbedtls "mbedtls_mqtt.h"
 #define opcuaPS "opcua_pubsub.h"
+#define opcuaServer "opcua_server.h"
 //#define lwmqtt "lw_mbedtls_mqtt.h"
 
-#include opcuaPS
+#include opcuaServer
 
 #include "mqtt_client.h"
 
@@ -50,6 +51,10 @@ void app_main() {
 #endif
 
 #ifdef SRC_IOT_OPCUA_PUBSUB_H_
+	wifi_scan();
+#endif
+
+#ifdef SRC_IOT_OPC_UA_OPCUA_SERVER_H_
 	wifi_scan();
 #endif
 

@@ -36,7 +36,7 @@ extern "C" {
 //#define DEFAULT_SSID "smc@iot"
 //#define DEFAULT_PWD "12345678iot"
 
-#define TAG "APP_MAIN"
+#define TAG "OPCUA_SERVER"
 #define DHT_GPIO 4
 
 uint8_t mac[6];
