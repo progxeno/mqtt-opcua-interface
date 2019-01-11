@@ -9,7 +9,7 @@
 
 void sensor_task(void *pvParameter) {
 	//TODO: For now it only reads temperature once in parallel with opcua_task creation. Change this behaviour and make temperature dynamic.
-	temperature = ReadTemperature(4);
+	//temperature = temprature_sens_read();
 	ESP_LOGI("Sensor_Task", "Temperature read from the sensor: %f", temperature);
 	vTaskDelete(NULL);
 }

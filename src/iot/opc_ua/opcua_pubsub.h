@@ -25,6 +25,8 @@ extern "C" {
 #include "esp_event_loop.h"
 #include "nvs_flash.h"
 
+#include "rom/ets_sys.h"
+#include "soc/rtc_cntl_reg.h"
 #include "soc/sens_reg.h"
 
 #include <time.h>
@@ -42,6 +44,8 @@ extern "C" {
 #define DHT_GPIO 4
 
 uint8_t mac[6];
+
+uint8_t temprature_sens_read();
 
 static UA_Boolean running = true;
 UA_NodeId connectionIdent, publishedDataSetIdent, writerGroupIdent;

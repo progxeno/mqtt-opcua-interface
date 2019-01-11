@@ -51,12 +51,15 @@ void addDataSetField(UA_Server *server) {
 
 	/* Add a field to the previous created PublishedDataSet */
 	UA_NodeId dataSetFieldIdent;
+	UA_NodeId createdNodeId;
 	UA_DataSetFieldConfig dataSetFieldConfig;
+	parseTemperature(server, createdNodeId);
+
 	memset(&dataSetFieldConfig, 0, sizeof(UA_DataSetFieldConfig));
 	dataSetFieldConfig.dataSetFieldType = UA_PUBSUB_DATASETFIELD_VARIABLE;
 	dataSetFieldConfig.field.variable.fieldNameAlias = UA_STRING("Server localtime");
 	dataSetFieldConfig.field.variable.promotedField = UA_FALSE;
-	dataSetFieldConfig.field.variable.publishParameters.publishedVariable = UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERSTATUS_CURRENTTIME);
+	dataSetFieldConfig.field.variable.publishParameters.publishedVariable = createdNodeId;//UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERSTATUS_CURRENTTIME);
 	dataSetFieldConfig.field.variable.publishParameters.attributeId = UA_ATTRIBUTEID_VALUE;
 	UA_Server_addDataSetField(server, publishedDataSetIdent, &dataSetFieldConfig, &dataSetFieldIdent);
 
@@ -137,8 +140,7 @@ void addDataSetWriter(UA_Server *server) {
 void parseTemperature(UA_Server *server, const UA_NodeId nodeid) {
 	float temp;
 	char *buf = UA_malloc(sizeof(char) * 512);
-	temp = ReadTemperature(DHT_GPIO);
-	temp = 50.33;
+	temp = ( temprature_sens_read() - 32 ) / 1.8;
 	printf("Returned Temperature: %.6f\n", temp);
 	snprintf(buf, 512, "%f", temp);
 	printf("Read Temperature : %s\n", buf);
