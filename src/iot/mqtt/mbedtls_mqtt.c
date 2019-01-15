@@ -6,7 +6,8 @@
  */
 #include "mbedtls_mqtt.h"
 
-static esp_err_t event_handler(void *ctx, system_event_t *event) {
+static esp_err_t event_handler(void *ctx, system_event_t *event)
+{
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:
 			esp_wifi_connect();
@@ -18,7 +19,8 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			/* This is a workaround as ESP32 WiFi libs don't currently
 			 auto-reassociate. */
-			ESP_ERROR_CHECK(esp_wifi_connect());
+			ESP_ERROR_CHECK(esp_wifi_connect())
+			;
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			break;
 		default:
@@ -27,7 +29,8 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 	return ESP_OK;
 }
 
-void initialise_wifi(void) {
+void initialise_wifi(void)
+{
 	tcpip_adapter_init();
 	wifi_event_group = xEventGroupCreate();
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
@@ -45,14 +48,14 @@ void initialise_wifi(void) {
 	ESP_ERROR_CHECK(esp_wifi_start());
 }
 
-void mqtt_task(void *pvParameters) {
+void mqtt_task(void *pvParameters)
+{
 	Network network;
-	ESP_ERROR_CHECK(i2c_master_init());
+	ESP_ERROR_CHECK(spi_master_config());
 
 	int ret;
 	char buf[10];
-	uint8_t sensor_data_h, sensor_data_l;
-	uint16_t sensor_data;
+	double sensor_data;
 	/* Wait for the callback to set the CONNECTED_BIT in the
 	 event group.
 	 */
@@ -95,9 +98,8 @@ void mqtt_task(void *pvParameters) {
 	}
 	while (1) {
 
-		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data_h, &sensor_data_l);
-		sensor_data = (uint16_t) sensor_data_h << 8 | sensor_data_l;
-		sprintf(buf, "%u", sensor_data);
+		ret = spi_master_read_sensor(&sensor_data);
+		sprintf(buf, "%f", sensor_data);
 
 		MQTTMessage message;
 		//	ESP_LOGI(TAG, "MQTTPublish  ... %s",(uint8_t *) buf);
@@ -105,7 +107,7 @@ void mqtt_task(void *pvParameters) {
 		message.qos = QOS0;
 		message.retained = false;
 		message.dup = false;
-		message.payload = (uint8_t *) buf;
+		message.payload = (uint16_t *) buf;
 		message.payloadlen = strlen(buf) + 1;
 
 		if (status) {

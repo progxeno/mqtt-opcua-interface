@@ -5,7 +5,7 @@
  *      Author: miosga.mario
  */
 
-#include "../opc_ua/opcua_pubsub.h"
+#include "opcua_pubsub.h"
 
 void addPubSubConnection(UA_Server *server) {
 	/* Details about the connection configuration and handling are located
@@ -52,46 +52,56 @@ void addDataSetField(UA_Server *server) {
 	/* Add a field to the previous created PublishedDataSet */
 	UA_NodeId dataSetFieldIdent;
 	UA_NodeId createdNodeId;
-	UA_DataSetFieldConfig dataSetFieldConfig;
-	parseTemperature(server, createdNodeId);
+	UA_DataSetFieldConfig dataSetFieldDate;
+	UA_DataSetFieldConfig dataSetFieldTemp;
 
-	memset(&dataSetFieldConfig, 0, sizeof(UA_DataSetFieldConfig));
-	dataSetFieldConfig.dataSetFieldType = UA_PUBSUB_DATASETFIELD_VARIABLE;
-	dataSetFieldConfig.field.variable.fieldNameAlias = UA_STRING("Server localtime");
-	dataSetFieldConfig.field.variable.promotedField = UA_FALSE;
-	dataSetFieldConfig.field.variable.publishParameters.publishedVariable = createdNodeId;//UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERSTATUS_CURRENTTIME);
-	dataSetFieldConfig.field.variable.publishParameters.attributeId = UA_ATTRIBUTEID_VALUE;
-	UA_Server_addDataSetField(server, publishedDataSetIdent, &dataSetFieldConfig, &dataSetFieldIdent);
+//	memset(&dataSetFieldDate, 0, sizeof(UA_DataSetFieldConfig));
+//	dataSetFieldDate.dataSetFieldType = UA_PUBSUB_DATASETFIELD_VARIABLE;
+//	dataSetFieldDate.field.variable.fieldNameAlias = UA_STRING("Server localtime");
+//	dataSetFieldDate.field.variable.promotedField = UA_FALSE;
+//	dataSetFieldDate.field.variable.publishParameters.publishedVariable = UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERSTATUS_CURRENTTIME);
+//	dataSetFieldDate.field.variable.publishParameters.attributeId = UA_ATTRIBUTEID_VALUE;
+//	UA_Server_addDataSetField(server, publishedDataSetIdent, &dataSetFieldDate, &dataSetFieldIdent);
 
-//	/* Add a field to the previous created PublishedDataSet */
-//	UA_NodeId createdNodeId;
-//	UA_VariableAttributes attr = UA_VariableAttributes_default;
-//	attr.minimumSamplingInterval = 0.000000;
-//	attr.userAccessLevel = 3;
-//	attr.accessLevel = 3;
-//	attr.valueRank = -1;
-//	attr.dataType = UA_NODEID_NUMERIC(0, 12); //6 for INT32
-//	UA_String classVar = UA_STRING("Temperature: 21 C");
-//	UA_Variant_setScalar(&attr.value, &classVar, &UA_TYPES[UA_TYPES_STRING]);
-//
-//	UA_StatusCode addNodeStat = UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, UA_NODEID_NUMERIC(1, 6001),
-//														UA_NODEID_NUMERIC(0, UA_NS0ID_PUBLISHSUBSCRIBE), UA_NODEID_NUMERIC(0, 47),
-//														UA_QUALIFIEDNAME(1, "Test"), UA_NODEID_NUMERIC(0, 63), (const UA_NodeAttributes*) &attr,
-//														&UA_TYPES[UA_TYPES_VARIABLEATTRIBUTES],
-//														NULL,
-//														&createdNodeId);
-//
-//	parseTemperature(server, createdNodeId);
-//	UA_NodeId dataSetFieldIdent;
-//	UA_DataSetFieldConfig dataSetFieldConfig;
-//	memset(&dataSetFieldConfig, 0, sizeof(UA_DataSetFieldConfig));
-//	dataSetFieldConfig.dataSetFieldType = UA_PUBSUB_DATASETFIELD_VARIABLE;
-//	dataSetFieldConfig.field.variable.fieldNameAlias = UA_STRING("Server localtime");
-//	dataSetFieldConfig.field.variable.promotedField = UA_FALSE;
-//	dataSetFieldConfig.field.variable.publishParameters.publishedVariable = createdNodeId;
-//	dataSetFieldConfig.field.variable.publishParameters.attributeId = UA_ATTRIBUTEID_VALUE;
-//
-//	UA_DataSetFieldResult addDataSetFieldStat = UA_Server_addDataSetField(server, publishedDataSetIdent, &dataSetFieldConfig, &dataSetFieldIdent);
+	float temp;
+	char *buf = UA_malloc(sizeof(char) * 512);
+	temp = (temprature_sens_read() - 32) / 1.8;
+	printf("Returned Temperature: %.6f\n", temp);
+	snprintf(buf, 512, "%f", temp);
+
+	UA_VariableAttributes attr = UA_VariableAttributes_default;
+	attr.minimumSamplingInterval = 0.000000;
+	attr.userAccessLevel = 3;
+	attr.accessLevel = 3;
+	attr.valueRank = -1;
+	attr.dataType = UA_NODEID_STRING(0, buf);//(0, 12); //6 for INT32
+	UA_String classVar = UA_STRING(buf);
+	UA_Variant_setScalar(&attr.value, &classVar, &UA_TYPES[UA_TYPES_FLOAT]);
+
+	UA_Server_addNode_begin(server,
+							UA_NODECLASS_VARIABLE,
+							UA_NODEID_NUMERIC(1, ((temprature_sens_read() - 32) / 1.8)),
+							UA_NODEID_NUMERIC(0, UA_NS0ID_PUBLISHSUBSCRIBE),
+							UA_NODEID_NUMERIC(0, 47),
+							UA_QUALIFIEDNAME(1, "Test"),
+							UA_NODEID_NUMERIC(0, 63), (const UA_NodeAttributes*) &attr,
+							&UA_TYPES[UA_TYPES_VARIABLEATTRIBUTES],
+							NULL,
+							&createdNodeId);
+
+	//UA_NodeId_init(&createdNodeId);
+	//parseTemperature(server, createdNodeId);
+	printf("Returned Temperature: %f\n", ((temprature_sens_read() - 32) / 1.8));
+	printf("NodeID: %s\n", (char*)&createdNodeId.identifier.string);
+
+	memset(&dataSetFieldTemp, 0, sizeof(UA_DataSetFieldConfig));
+	dataSetFieldTemp.dataSetFieldType = UA_PUBSUB_DATASETFIELD_VARIABLE;
+	dataSetFieldTemp.field.variable.fieldNameAlias = UA_STRING("CPU Temperature");
+	dataSetFieldTemp.field.variable.promotedField = UA_FALSE;
+	dataSetFieldTemp.field.variable.publishParameters.publishedVariable = createdNodeId;
+//createdNodeId;
+	dataSetFieldTemp.field.variable.publishParameters.attributeId = UA_ATTRIBUTEID_VALUE;
+	UA_Server_addDataSetField(server, publishedDataSetIdent, &dataSetFieldTemp, &dataSetFieldIdent); //	/* Add a field to the previous created PublishedDataSet */
 }
 
 /**
@@ -140,7 +150,7 @@ void addDataSetWriter(UA_Server *server) {
 void parseTemperature(UA_Server *server, const UA_NodeId nodeid) {
 	float temp;
 	char *buf = UA_malloc(sizeof(char) * 512);
-	temp = ( temprature_sens_read() - 32 ) / 1.8;
+	temp = (temprature_sens_read() - 32) / 1.8;
 	printf("Returned Temperature: %.6f\n", temp);
 	snprintf(buf, 512, "%f", temp);
 	printf("Read Temperature : %s\n", buf);
@@ -148,7 +158,7 @@ void parseTemperature(UA_Server *server, const UA_NodeId nodeid) {
 
 	//UA_String temperature = UA_STRING("Temperature as string!"); //Change here as read numeric temperature value
 	UA_Variant value;
-	UA_Variant_setScalar(&value, &temperature, &UA_TYPES[UA_TYPES_STRING]);
+	UA_Variant_setScalar(&value, &temp, &UA_TYPES[UA_TYPES_FLOAT]);
 	UA_Server_writeValue(server, nodeid, value);
 }
 
@@ -158,23 +168,12 @@ void opcua_task(void *pvParameter) {
 	//config = UA_ServerConfig_new_customBuffer(4840, NULL, 8192, 8192);
 	config = UA_ServerConfig_new_default();
 
-	//Set the connection config
-	//UA_ConnectionConfig connectionConfig;
-	//connectionConfig.recvBufferSize = 32768;
-	//connectionConfig.sendBufferSize = 32768;
-
-	//UA_ServerNetworkLayer nl = UA_ServerNetworkLayerTCP(connectionConfig, 4840, NULL);
-	//config->networkLayers = &nl;
-	//config->networkLayersSize = 1;
-
 	/* Details about the connection configuration and handling are located in the pubsub connection tutorial */
 	config->pubsubTransportLayers = (UA_PubSubTransportLayer *) UA_malloc(sizeof(UA_PubSubTransportLayer));
 	if (!config->pubsubTransportLayers) {
 		UA_ServerConfig_delete(config);
 		return;
 	}
-//    UA_String esp32url = UA_String_fromChars("opc.tcp://10.0.0.10:4840/");
-	//UA_String esp32url = UA_String_fromChars("opc.udp://224.0.0.11:4840/");
 
 	config->customHostname = UA_STRING("ESP32");
 	//config->applicationDescription.discoveryUrls = &esp32url;
@@ -201,7 +200,8 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
-			ESP_ERROR_CHECK(esp_wifi_connect());
+			ESP_ERROR_CHECK(esp_wifi_connect())
+			;
 			break;
 		case SYSTEM_EVENT_STA_GOT_IP:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
@@ -212,7 +212,8 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 			break;
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
-			ESP_ERROR_CHECK(esp_wifi_connect());
+			ESP_ERROR_CHECK(esp_wifi_connect())
+			;
 			break;
 		default:
 			break;

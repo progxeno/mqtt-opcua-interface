@@ -136,7 +136,7 @@ if [ ! -f $CACERT.pem ]; then
 	#                 
 
 	# Create un-encrypted (!) key
-	$openssl req -newkey rsa:${keybits} -x509 -nodes $defaultmd -days $days -extensions v3_ca -keyout $CACERT.key -out $CACERT.pem -subj "${CA_DN}"
+	$openssl req -newkey ${keybits} -x509 -nodes $defaultmd -days $days -extensions v3_ca -keyout $CACERT.key -out $CACERT.pem -subj "${CA_DN}"
 	echo "Created CA certificate in $CACERT.pem"
 	$openssl x509 -in $CACERT.pem -nameopt multiline -subject -noout
 

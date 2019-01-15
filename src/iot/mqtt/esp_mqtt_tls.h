@@ -51,8 +51,50 @@ extern "C" {
 	extern const uint8_t ca_pem_start[] asm("_binary_ca_pem_start");
 	extern const uint8_t ca_pem_end[] asm("_binary_ca_pem_end");
 
-	static esp_err_t wifi_event_handler(void *ctx, system_event_t *event);
-	static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event);
+	static esp_err_t wifi_event_handler(void *ctx, system_event_t *event) {
+		switch (event->event_id) {
+			case SYSTEM_EVENT_STA_START:
+				esp_wifi_connect();
+				break;
+			case SYSTEM_EVENT_STA_GOT_IP:
+				xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+				break;
+			case SYSTEM_EVENT_STA_DISCONNECTED:
+				ESP_ERROR_CHECK(esp_wifi_connect());
+				xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
+				break;
+			default:
+				break;
+		}
+		return ESP_OK;
+	}
+	static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
+	{
+		// your_context_t *context = event->context;
+		esp_mqtt_client_handle_t client = event->client;
+		ESP_ERROR_CHECK(spi_master_config());
+
+		int ret;
+		char buf[10];
+		double sensor_data;
+
+		while (1) {
+			ret =  spi_master_read_sensor(&sensor_data);
+			sprintf(buf, "%f", sensor_data);
+
+			if (status) {
+				if (ret == ESP_ERR_TIMEOUT) {
+					ESP_LOGE(TAG, "Communication Timeout");
+				} else if (ret == ESP_OK) {
+					esp_mqtt_client_publish(client, "device/id1/data", buf, 0, 0, 0);
+				} else {
+					ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
+				}
+			}
+		}
+
+		return ESP_OK;
+	}
 
 	void wifi_init(void);
 	void mqtt_app_start(void);

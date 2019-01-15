@@ -21,7 +21,7 @@
 #define opcuaServer "opcua_server.h"
 //#define lwmqtt "lw_mbedtls_mqtt.h"
 
-#include opcuaPS
+#include mbedtls
 
 #include "mqtt_client.h"
 
@@ -42,12 +42,12 @@ void app_main() {
 #ifdef SRC_IOT_ESP_MQTT_TLS_H_
 	wifi_init();
 	mqtt_app_start();
-	xTaskCreate(spi_process_task, "spi", 16384, NULL, 5, NULL);
+//	xTaskCreate(spi_process_task, "spi", 16384, NULL, 5, NULL);
 #endif
 
 #ifdef SRC_IOT_MBEDTLS_MQTT_H_
 	initialise_wifi();
-//	xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
+	//xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
 #endif
 
 #ifdef SRC_IOT_OPCUA_PUBSUB_H_

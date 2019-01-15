@@ -52,8 +52,8 @@
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/soc/esp32/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/lwip/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/lwip/lwip/src/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\msys32\home\Mario\esp\esp-idf\components\open62541lib&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\msys32\home\Mario\esp\esp-idf\components\open62541lib\include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/open62541lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/open62541lib/include&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.940347507" superClass="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin"/>
 							</tool>

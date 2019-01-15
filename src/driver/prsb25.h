@@ -88,10 +88,8 @@ static esp_err_t spi_master_config(void)
 
 static esp_err_t spi_master_read_sensor(double *value)
 {
-	int ret;
-	double diff = 0.0;
-	static double last = 0.0;
-	static double phase = 0.0;
+	int ret = -1;
+	double phase = 0.0;
 	const double factor = 360.0 / 16383.0;
 
 	/// Prepare transaction parameter
@@ -145,20 +143,9 @@ static esp_err_t spi_master_read_sensor(double *value)
 //    ESP_LOGI(TAG, "crc %d\talpha %d\tcount %2d\n", crc, alpha, counter);
 //    ESP_LOGI(TAG, "error %d\tphase %2.5f\tdiff %2.5f\n", error, phase, diff);
 
-    last = phase;
     phase = (double)alpha * factor;
 
-    /// Calculation
-    diff = phase - last;
-    if (fabs(diff) > 180.0) {
-        if (last > phase) {
-            diff = (phase + 360.0) - last;
-        } else if (last < phase) {
-            diff = phase - (last + 360.0);
-        }
-    }
-
-    *value = diff;
+    *value = phase;
 //	ESP_LOGI(TAG, "Data: %f", diff);
 
 	return ret;

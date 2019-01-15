@@ -41,7 +41,10 @@ extern "C" {
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 
-#include "mb1222.h"
+	//#include "mb1222.h"
+	//#include "spi_3_wire.h"
+#include "prsb25.h"
+
 #include "MQTTClient.h"
 
 #define DEFAULT_SSID "MasterarbeitPi"

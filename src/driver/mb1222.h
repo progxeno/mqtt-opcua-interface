@@ -74,8 +74,11 @@ static esp_err_t i2c_master_init() {
  * | start | slave_addr + rd_bit + ack | read 1 byte + ack  | read 1 byte + nack | stop |
  * --------|---------------------------|--------------------|--------------------|------|
  */
-static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint8_t *data_h, uint8_t *data_l) {
+static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint16_t *data) {
 	int ret;
+	uint8_t *data_h = 0;
+	uint8_t *data_l = 0;
+
 	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 	i2c_master_start(cmd);
 	i2c_master_write_byte(cmd, MB1222_SENSOR_ADDR << 1 | WRITE_BIT,
@@ -97,19 +100,24 @@ static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint8_t *data_h, uin
 	i2c_master_stop(cmd);
 	ret = i2c_master_cmd_begin(i2c_num, cmd, 10 / portTICK_RATE_MS);
 	i2c_cmd_link_delete(cmd);
+
+	*data = (uint16_t) *data_h << 8 | *data_l;
+
 	return ret;
 }
 
-static void i2c_process_task(void *arg) {
+static void i2c_process_task(void *arg)
+{
 	int ret;
-	uint8_t sensor_data_h, sensor_data_l;
+	uint16_t sensor_data;
 
 	while (1) {
-		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data_h, &sensor_data_l);
+		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
+
 		if (ret == ESP_ERR_TIMEOUT) {
 			ESP_LOGE(TAG, "I2C Timeout");
 		} else if (ret == ESP_OK) {
-			printf("\nsensor val: %i [cm]\n", sensor_data_h << 8 | sensor_data_l);
+			printf("\nsensor val: %i [cm]\n", sensor_data);
 		} else {
 			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
 		}
