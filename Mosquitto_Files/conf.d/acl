@@ -1,0 +1,17 @@
+# admin 
+user sentenz
+topic readwrite #
+topic readwrite $SYS/#
+
+# 
+user master
+topic read #
+topic write master/#
+
+#
+user client
+topic read device/#
+
+#
+user device
+topic write device/#
