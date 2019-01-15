@@ -70,7 +70,8 @@ extern "C" {
 	/* FreeRTOS event group to signal when we are connected & ready to make a request */
 	static EventGroupHandle_t wifi_event_group;
 
-	static void status_callback(esp_mqtt_status_callback_t state) {
+	static void status_callback(esp_mqtt_status_callback_t state)
+	{
 
 		if (state)
 			ESP_LOGI(TAG, "mqtt connected\n");
@@ -99,10 +100,12 @@ extern "C" {
 //		break;
 	}
 
-	static void message_callback(const char *topic, uint8_t *payload, size_t len) {
+	static void message_callback(const char *topic, uint8_t *payload, size_t len)
+	{
 		ESP_LOGI(TAG, "incoming : %s => %s (%d)\n", topic, payload, (int) len);
 	}
-	static esp_err_t lw_event_handler(void *ctx, system_event_t *event) {
+	static esp_err_t lw_event_handler(void *ctx, system_event_t *event)
+	{
 		switch (event->event_id) {
 			case SYSTEM_EVENT_STA_START:
 				esp_wifi_connect();

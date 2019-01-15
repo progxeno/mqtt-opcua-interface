@@ -41,21 +41,14 @@ extern "C" {
 #define TAG "OPC_UA_PUBSUB"
 #define BLINK_GPIO 1
 
-UA_ServerConfig *config;
-float temperature;
+	UA_ServerConfig *config;
+	float temperature;
+	static UA_Boolean running = true;
 
-static UA_Boolean running = true;
-
-void
-addTemperatureNode(UA_Server *server);
-
-void sensor_task(void *pvParameter);
-
-void opcua_task(void *pvParameter);
-
-void addTemperatureNode(UA_Server *server);
-
-static esp_err_t event_handler(void *ctx, system_event_t *event);
-
-void wifi_scan(void);
+	void addTemperatureNode(UA_Server *server);
+	void sensor_task(void *pvParameter);
+	void opcua_task(void *pvParameter);
+	void addTemperatureNode(UA_Server *server);
+	static esp_err_t event_handler(void *ctx, system_event_t *event);
+	void wifi_scan(void);
 #endif /* SRC_IOT_OPC_UA_OPCUA_SERVER_H_ */

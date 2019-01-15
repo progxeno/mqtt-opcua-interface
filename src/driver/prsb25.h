@@ -63,8 +63,7 @@ static esp_err_t spi_master_config(void)
 			.sclk_io_num = PIN_NUM_CLK,
 			.quadwp_io_num = -1,
 			.quadhd_io_num = -1,
-			.max_transfer_sz = SPI_MAX_DMA_LEN,
-	};
+			.max_transfer_sz = SPI_MAX_DMA_LEN, };
 
 	/// Configuration for the SPI master interface
 	spi_device_interface_config_t devcfg = {
@@ -74,7 +73,7 @@ static esp_err_t spi_master_config(void)
 			.queue_size = 1,
 //			.pre_cb = NULL,
 //			.post_cb = NULL,
-	};
+			};
 
 	/// Initialize and enable SPI
 	ret = spi_bus_initialize(VSPI_HOST, &buscfg, 1);
@@ -93,13 +92,21 @@ static esp_err_t spi_master_read_sensor(double *value)
 	const double factor = 360.0 / 16383.0;
 
 	/// Prepare transaction parameter
-	uint8_t tx[] = { 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x13, 0xEA };
-	uint8_t rx[8] = {0};
+	uint8_t tx[] = {
+			0x00,
+			0xFF,
+			0xFF,
+			0x00,
+			0x00,
+			0x13,
+			0xEA };
+	uint8_t rx[8] = {
+			0 };
 
 	spi_transaction_t trans;
 	memset(&trans, 0, sizeof(trans));
-	trans.length = 8*8;
-	trans.rxlength = 8*8;
+	trans.length = 8 * 8;
+	trans.rxlength = 8 * 8;
 	trans.tx_buffer = &tx;
 	trans.rx_buffer = &rx;
 
@@ -112,14 +119,14 @@ static esp_err_t spi_master_read_sensor(double *value)
 	vTaskDelay(1 / portTICK_RATE_MS);
 
 	/// NOP
-    tx[0] = 0x00;
-    tx[1] = 0x00;
-    tx[2] = 0xAA;
-    tx[3] = 0xAA;
-    tx[4] = 0x00;
-    tx[5] = 0x00;
-    tx[6] = 0xD0;
-    tx[7] = 0xAB;
+	tx[0] = 0x00;
+	tx[1] = 0x00;
+	tx[2] = 0xAA;
+	tx[3] = 0xAA;
+	tx[4] = 0x00;
+	tx[5] = 0x00;
+	tx[6] = 0xD0;
+	tx[7] = 0xAB;
 
 	ret = spi_device_transmit(spi_handle, &trans);
 	if (ESP_OK != ret) {
@@ -129,23 +136,23 @@ static esp_err_t spi_master_read_sensor(double *value)
 	/// Mandatory
 	vTaskDelay(1 / portTICK_RATE_MS);
 
-    /// Extract and convert the angle to degrees
+	/// Extract and convert the angle to degrees
 	unsigned int alpha = rx[0] | (rx[1] & 0x3F) << 8;
-    /// Extract the error bits
+	/// Extract the error bits
 	uint8_t error = rx[1] >> 6;
-    /// Extract the virtual gain byte
+	/// Extract the virtual gain byte
 	uint8_t gain = rx[4];
-    /// Extract the rolling counter
+	/// Extract the rolling counter
 	uint8_t counter = rx[6] & 0x3F;
-    /// Extract the CRC
+	/// Extract the CRC
 	uint8_t crc = rx[7];
 
 //    ESP_LOGI(TAG, "crc %d\talpha %d\tcount %2d\n", crc, alpha, counter);
 //    ESP_LOGI(TAG, "error %d\tphase %2.5f\tdiff %2.5f\n", error, phase, diff);
 
-    phase = (double)alpha * factor;
+	phase = (double) alpha * factor;
 
-    *value = phase;
+	*value = phase;
 //	ESP_LOGI(TAG, "Data: %f", diff);
 
 	return ret;

@@ -52,7 +52,8 @@ spi_device_handle_t spi_handle;
 static bool status = true;
 
 // Initialize the SPI2 device in master mode
-static esp_err_t spi_master_config(void) {
+static esp_err_t spi_master_config(void)
+{
 
 	esp_err_t ret;
 	// Configuration for the SPI bus
@@ -62,8 +63,7 @@ static esp_err_t spi_master_config(void) {
 			.sclk_io_num = PIN_NUM_CLK,
 			.quadwp_io_num = -1,
 			.quadhd_io_num = -1,
-			.max_transfer_sz = SPI_MAX_DMA_LEN,
-	};
+			.max_transfer_sz = SPI_MAX_DMA_LEN, };
 
 	// Configuration for the SPI master interface
 	spi_device_interface_config_t devcfg = {
@@ -73,8 +73,7 @@ static esp_err_t spi_master_config(void) {
 			.queue_size = 1,
 			.flags = SPI_DEVICE_3WIRE, // | SPI_DEVICE_HALFDUPLEX,
 			.pre_cb = NULL,
-			.post_cb = NULL,
-	};
+			.post_cb = NULL, };
 
 	// Initialize and enable SPI
 	ret = spi_bus_initialize(VSPI_HOST, &buscfg, 1);
@@ -88,18 +87,22 @@ static esp_err_t spi_master_config(void) {
 	return ret;
 }
 
-static esp_err_t spi_master_read_sensor(uint8_t *data, uint8_t *size) {
+static esp_err_t spi_master_read_sensor(uint8_t *data, uint8_t *size)
+{
 
 	int ret;
 	// Prepare transaction parameter
-	uint8_t tx[2] = { 0xAA, 0xFF };
-	uint8_t rx[2] = {0};
+	uint8_t tx[2] = {
+			0xAA,
+			0xFF };
+	uint8_t rx[2] = {
+			0 };
 
 	spi_transaction_t trans;
 	memset(&trans, 0, sizeof(trans));
 	trans.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
-	trans.length = 2*8;
-	trans.rxlength = 2*8;
+	trans.length = 2 * 8;
+	trans.rxlength = 2 * 8;
 	trans.tx_data[0] = 0xAA;
 	trans.tx_data[1] = 0xFF;
 
@@ -119,7 +122,8 @@ static esp_err_t spi_master_read_sensor(uint8_t *data, uint8_t *size) {
 }
 
 // Full buffer DMA transfer
-static void spi_process_task(void *arg) {
+static void spi_process_task(void *arg)
+{
 
 	ESP_ERROR_CHECK(spi_master_config());
 	int ret;
@@ -139,8 +143,7 @@ static void spi_process_task(void *arg) {
 //				printf("\nsensor val: %i [cm]\n",
 //						sensor_data_h << 8 | sensor_data_l);
 		} else {
-			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...",
-					esp_err_to_name(ret));
+			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
 		}
 	}
 	vTaskDelete(NULL);

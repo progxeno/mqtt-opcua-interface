@@ -25,7 +25,7 @@
 <setting id="org.eclipse.cdt.core.formatter.insert_space_after_binary_operator" value="insert"/>
 <setting id="org.eclipse.cdt.core.formatter.insert_space_before_semicolon" value="do not insert"/>
 <setting id="org.eclipse.cdt.core.formatter.alignment_for_binary_expression" value="16"/>
-<setting id="org.eclipse.cdt.core.formatter.brace_position_for_method_declaration" value="end_of_line"/>
+<setting id="org.eclipse.cdt.core.formatter.brace_position_for_method_declaration" value="next_line"/>
 <setting id="org.eclipse.cdt.core.formatter.insert_space_before_semicolon_in_for" value="do not insert"/>
 <setting id="org.eclipse.cdt.core.formatter.brace_position_for_array_initializer" value="end_of_line"/>
 <setting id="org.eclipse.cdt.core.formatter.insert_space_before_opening_brace_in_method_declaration" value="insert"/>
@@ -123,7 +123,7 @@
 <setting id="org.eclipse.cdt.core.formatter.insert_new_line_before_closing_brace_in_array_initializer" value="do not insert"/>
 <setting id="org.eclipse.cdt.core.formatter.continuation_indentation" value="2"/>
 <setting id="org.eclipse.cdt.core.formatter.insert_new_line_before_while_in_do_statement" value="do not insert"/>
-<setting id="org.eclipse.cdt.core.formatter.put_empty_statement_on_new_line" value="true"/>
+<setting id="org.eclipse.cdt.core.formatter.put_empty_statement_on_new_line" value="false"/>
 <setting id="org.eclipse.cdt.core.formatter.insert_space_after_closing_brace_in_block" value="insert"/>
 <setting id="org.eclipse.cdt.core.formatter.format_guardian_clause_on_one_line" value="false"/>
 <setting id="org.eclipse.cdt.core.formatter.indentation.size" value="4"/>

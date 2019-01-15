@@ -41,21 +41,18 @@ extern "C" {
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 
-	//#include "mb1222.h"
-	//#include "spi_3_wire.h"
-#include "prsb25.h"
-
 #include "MQTTClient.h"
 
-#define DEFAULT_SSID "MasterarbeitPi"
-#define DEFAULT_PWD "MasterSMC2018"
-//#define DEFAULT_SSID "smc@iot"
-//#define DEFAULT_PWD "12345678iot"
+#define PRSB_25
 
-#define MQTT_SERVER "raspberrypi"
-#define MQTT_USER "mbedtls"
-#define MQTT_PASS "mbedtlsMQTT"
-#define MQTT_PORT 8883
+#ifdef PRSB_25
+#include "prsb25.h"
+#elif defined MB_1222
+#include "mb1222.h"
+#endif
+
+//#define MQTT_SERVER "raspberrypi"
+//#define MQTT_PORT 8883
 #define MQTT_BUF_SIZE 1000
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
 

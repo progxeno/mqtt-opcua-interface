@@ -15,17 +15,22 @@
 
 #include "esp_log.h"
 
-#define esp "esp_mqtt_tls.h"
-#define mbedtls "mbedtls_mqtt.h"
-#define opcuaPS "opcua_pubsub.h"
-#define opcuaServer "opcua_server.h"
-//#define lwmqtt "lw_mbedtls_mqtt.h"
+#define ESP_MQTT_TLS
 
-#include mbedtls
+#ifdef ESP_MQTT_TLS
+	#include "esp_mqtt_tls.h"
+#elif defined MBED_TLS_MQTT
+	#include "mbedtls_mqtt.h"
+#elif defined OPCUA_PUB_SUB
+	#include "opcua_pubsub.h"
+#elif defined OPCUA_SERVER
+	#include "opcua_server.h"
+#elif defined LWMQTT
+	#include "lw_mbedtls_mqtt.h"
+#endif
 
-#include "mqtt_client.h"
-
-void app_main() {
+void app_main()
+{
 	ESP_LOGI(TAG, "[APP] Startup..");
 	ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
 	ESP_LOGI(TAG, "[APP] IDF version: %s", esp_get_idf_version());

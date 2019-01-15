@@ -1,15 +1,50 @@
-menu "MQTT Application sample"
+menu "Application Settings"
 
-config WIFI_SSID
+config DEFAULT_SSID
     string "WiFi SSID"
     default "MasterarbeitPi"
     help
         SSID (network name) for the example to connect to.
 
-config WIFI_PASSWORD
+config DEFAULT_PWD
     string "WiFi Password"
     default "MasterSMC2018"
     help
         WiFi password (WPA or WPA2) for the example to use.
+        
+config MQTT_USER
+    string "Username"
+    default "device"
+    help
+        Username to connect to Mosquitto Broker.
 
+config MQTT_PASS
+    string "User Password"
+    default "device@iot"
+    help
+        Password to connect to Mosquitto Broker.
+
+config MQTT_SERVER
+string "Mosquitto Broker Hostname"
+    default "raspberrypi"
+    help
+        Hostname of Mosquitto Broker.
+        
+config MQTT_PORT
+int "Mosquitto Broker Port"
+    default 8883
+    help
+        Port of Mosquitto Broker.
+        
+config OPCUA_CLIENT
+string "Opc ua Subscriber Address"
+    default "opc.udp://224.0.0.22"
+    help
+        Hostname of Opc ua Client.
+        
+config OPCUA_PORT
+int "Opc ua Subscriber Port"
+    default 4840
+    help
+        Port of Opc ua Client.
 endmenu

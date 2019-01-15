@@ -59,7 +59,8 @@ spi_device_handle_t spi_handle;
 static bool status = true;
 
 // Initialize the SPI2 device in master mode
-static esp_err_t spi_master_config(void) {
+static esp_err_t spi_master_config(void)
+{
 
 	esp_err_t ret;
 	// Configuration for the SPI bus
@@ -91,7 +92,8 @@ static esp_err_t spi_master_config(void) {
 	return ret;
 }
 
-static esp_err_t spi_master_read_sensor(uint8_t *data, uint8_t *size) {
+static esp_err_t spi_master_read_sensor(uint8_t *data, uint8_t *size)
+{
 
 	int ret;
 	spi_transaction_t trans_t;
@@ -158,7 +160,8 @@ static esp_err_t spi_master_read_sensor(uint8_t *data, uint8_t *size) {
 }
 
 // Full buffer DMA transfer
-static void spi_process_task(void *arg) {
+static void spi_process_task(void *arg)
+{
 
 	ESP_ERROR_CHECK(spi_master_config());
 	int ret;

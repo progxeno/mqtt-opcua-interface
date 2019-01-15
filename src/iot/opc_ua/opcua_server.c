@@ -7,14 +7,16 @@
 
 #include "opcua_server.h"
 
-void sensor_task(void *pvParameter) {
+void sensor_task(void *pvParameter)
+{
 	//TODO: For now it only reads temperature once in parallel with opcua_task creation. Change this behaviour and make temperature dynamic.
 	//temperature = temprature_sens_read();
 	ESP_LOGI("Sensor_Task", "Temperature read from the sensor: %f", temperature);
 	vTaskDelete(NULL);
 }
 
-void opcua_task(void *pvParameter) {
+void opcua_task(void *pvParameter)
+{
 	ESP_LOGI(TAG, "Fire up OPC UA Server.");
 	//config = UA_ServerConfig_new_customBuffer(4840, NULL, 8192, 8192);
 	config = UA_ServerConfig_new_default();
@@ -62,7 +64,8 @@ void opcua_task(void *pvParameter) {
 	vTaskDelete(NULL);
 }
 
- void addTemperatureNode(UA_Server *server) {
+void addTemperatureNode(UA_Server *server)
+{
 	UA_VariableAttributes attr = UA_VariableAttributes_default;
 	//TODO: Temperature value should be read with a cycle and parsed into variable attr value.
 	UA_Int32 ambientTemperature = temperature; //ReadTemperature(4);
@@ -83,12 +86,12 @@ void opcua_task(void *pvParameter) {
 								NULL);
 }
 
-static esp_err_t event_handler(void *ctx, system_event_t *event) {
+static esp_err_t event_handler(void *ctx, system_event_t *event)
+{
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
-			ESP_ERROR_CHECK(esp_wifi_connect())
-			;
+			ESP_ERROR_CHECK(esp_wifi_connect());
 			break;
 		case SYSTEM_EVENT_STA_GOT_IP:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
@@ -99,8 +102,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 			break;
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
-			ESP_ERROR_CHECK(esp_wifi_connect())
-			;
+			ESP_ERROR_CHECK(esp_wifi_connect());
 			break;
 		default:
 			break;
@@ -108,12 +110,12 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 	return ESP_OK;
 }
 
- void wifi_scan(void) {
+void wifi_scan(void)
+{
 	tcpip_adapter_init();
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
-	;
+	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	wifi_config_t wifi_config = {
 			.sta = {
@@ -126,5 +128,4 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 	ESP_ERROR_CHECK(esp_wifi_start());
 	tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, "espressif");
 }
-
 

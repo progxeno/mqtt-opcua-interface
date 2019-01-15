@@ -46,7 +46,8 @@ static bool status = true;
 /**
  * @brief i2c master initialization
  */
-static esp_err_t i2c_master_init() {
+static esp_err_t i2c_master_init()
+{
 	int i2c_master_port = I2C_MASTER_NUM;
 	i2c_config_t conf;
 	conf.mode = I2C_MODE_MASTER;
@@ -57,8 +58,7 @@ static esp_err_t i2c_master_init() {
 	conf.master.clk_speed = I2C_MASTER_FREQ_HZ;
 	i2c_param_config(i2c_master_port, &conf);
 	return i2c_driver_install(i2c_master_port, conf.mode,
-	I2C_MASTER_RX_BUF_DISABLE,
-								I2C_MASTER_TX_BUF_DISABLE, 0);
+	I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
 }
 
 /**
@@ -74,7 +74,8 @@ static esp_err_t i2c_master_init() {
  * | start | slave_addr + rd_bit + ack | read 1 byte + ack  | read 1 byte + nack | stop |
  * --------|---------------------------|--------------------|--------------------|------|
  */
-static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint16_t *data) {
+static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint16_t *data)
+{
 	int ret;
 	uint8_t *data_h = 0;
 	uint8_t *data_l = 0;
@@ -101,7 +102,7 @@ static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint16_t *data) {
 	ret = i2c_master_cmd_begin(i2c_num, cmd, 10 / portTICK_RATE_MS);
 	i2c_cmd_link_delete(cmd);
 
-	*data = (uint16_t) *data_h << 8 | *data_l;
+	*data = (uint16_t) * data_h << 8 | *data_l;
 
 	return ret;
 }

@@ -19,8 +19,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			/* This is a workaround as ESP32 WiFi libs don't currently
 			 auto-reassociate. */
-			ESP_ERROR_CHECK(esp_wifi_connect())
-			;
+			ESP_ERROR_CHECK(esp_wifi_connect());
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			break;
 		default:
@@ -40,8 +39,8 @@ void initialise_wifi(void)
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 	wifi_config_t wifi_config = {
 			.sta = {
-					.ssid = DEFAULT_SSID,
-					.password = DEFAULT_PWD, }, };
+					.ssid = CONFIG_DEFAULT_SSID,
+					.password = CONFIG_DEFAULT_PWD, }, };
 	ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
@@ -59,9 +58,7 @@ void mqtt_task(void *pvParameters)
 	/* Wait for the callback to set the CONNECTED_BIT in the
 	 event group.
 	 */
-	xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
-	false,
-						true, portMAX_DELAY);
+	xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, false, true, portMAX_DELAY);
 	ESP_LOGI(TAG, "Connected to AP");
 
 	ESP_LOGI(TAG, "Start MQTT Task ...");
@@ -70,17 +67,17 @@ void mqtt_task(void *pvParameters)
 	NetworkInit(&network);
 	network.websocket = MQTT_WEBSOCKET;
 
-	ESP_LOGI(TAG, "NetworkConnect %s:%d ...", MQTT_SERVER, MQTT_PORT);
-	NetworkConnect(&network, MQTT_SERVER, MQTT_PORT);
+	ESP_LOGI(TAG, "NetworkConnect %s:%d ...", CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+	NetworkConnect(&network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
 	ESP_LOGI(TAG, "MQTTClientInit  ...");
 	MQTTClientInit(&client, &network, 2000, mqtt_sendBuf, MQTT_BUF_SIZE, mqtt_readBuf, MQTT_BUF_SIZE);
 
 	MQTTString clientId = MQTTString_initializer;
 	clientId.cstring = "MBEDTLS_MQTT";
 	MQTTString username = MQTTString_initializer;
-	username.cstring = MQTT_USER;
+	username.cstring = CONFIG_MQTT_USER;
 	MQTTString password = MQTTString_initializer;
-	password.cstring = MQTT_PASS;
+	password.cstring = CONFIG_MQTT_PASS;
 
 	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
 	data.clientID = clientId;

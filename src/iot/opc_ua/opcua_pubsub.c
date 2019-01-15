@@ -7,7 +7,8 @@
 
 #include "opcua_pubsub.h"
 
-void addPubSubConnection(UA_Server *server) {
+void addPubSubConnection(UA_Server *server)
+{
 	/* Details about the connection configuration and handling are located
 	 * in the pubsub connection tutorial */
 	UA_PubSubConnectionConfig connectionConfig;
@@ -30,7 +31,8 @@ void addPubSubConnection(UA_Server *server) {
  * the collection of the published fields.
  * All other PubSub elements are directly or indirectly linked with the PDS or connection.
  */
-void addPublishedDataSet(UA_Server *server) {
+void addPublishedDataSet(UA_Server *server)
+{
 	/* The PublishedDataSetConfig contains all necessary public
 	 * informations for the creation of a new PublishedDataSet */
 	UA_PublishedDataSetConfig publishedDataSetConfig;
@@ -47,7 +49,8 @@ void addPublishedDataSet(UA_Server *server) {
  * **DataSetField handling**
  * The DataSetField (DSF) is part of the PDS and describes exactly one published field.
  */
-void addDataSetField(UA_Server *server) {
+void addDataSetField(UA_Server *server)
+{
 
 	/* Add a field to the previous created PublishedDataSet */
 	UA_NodeId dataSetFieldIdent;
@@ -74,25 +77,20 @@ void addDataSetField(UA_Server *server) {
 	attr.userAccessLevel = 3;
 	attr.accessLevel = 3;
 	attr.valueRank = -1;
-	attr.dataType = UA_NODEID_STRING(0, buf);//(0, 12); //6 for INT32
+	attr.dataType = UA_NODEID_STRING(0, buf); //(0, 12); //6 for INT32
 	UA_String classVar = UA_STRING(buf);
 	UA_Variant_setScalar(&attr.value, &classVar, &UA_TYPES[UA_TYPES_FLOAT]);
 
-	UA_Server_addNode_begin(server,
-							UA_NODECLASS_VARIABLE,
-							UA_NODEID_NUMERIC(1, ((temprature_sens_read() - 32) / 1.8)),
-							UA_NODEID_NUMERIC(0, UA_NS0ID_PUBLISHSUBSCRIBE),
-							UA_NODEID_NUMERIC(0, 47),
-							UA_QUALIFIEDNAME(1, "Test"),
-							UA_NODEID_NUMERIC(0, 63), (const UA_NodeAttributes*) &attr,
-							&UA_TYPES[UA_TYPES_VARIABLEATTRIBUTES],
+	UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, UA_NODEID_NUMERIC(1, ((temprature_sens_read() - 32) / 1.8)),
+							UA_NODEID_NUMERIC(0, UA_NS0ID_PUBLISHSUBSCRIBE), UA_NODEID_NUMERIC(0, 47), UA_QUALIFIEDNAME(1, "Test"),
+							UA_NODEID_NUMERIC(0, 63), (const UA_NodeAttributes*) &attr, &UA_TYPES[UA_TYPES_VARIABLEATTRIBUTES],
 							NULL,
 							&createdNodeId);
 
 	//UA_NodeId_init(&createdNodeId);
 	//parseTemperature(server, createdNodeId);
 	printf("Returned Temperature: %f\n", ((temprature_sens_read() - 32) / 1.8));
-	printf("NodeID: %s\n", (char*)&createdNodeId.identifier.string);
+	printf("NodeID: %s\n", (char*) &createdNodeId.identifier.string);
 
 	memset(&dataSetFieldTemp, 0, sizeof(UA_DataSetFieldConfig));
 	dataSetFieldTemp.dataSetFieldType = UA_PUBSUB_DATASETFIELD_VARIABLE;
@@ -109,7 +107,8 @@ void addDataSetField(UA_Server *server) {
  * The WriterGroup (WG) is part of the connection and contains the primary configuration
  * parameters for the message creation.
  */
-void addWriterGroup(UA_Server *server) {
+void addWriterGroup(UA_Server *server)
+{
 	/* Now we create a new WriterGroupConfig and add the group to the existing PubSubConnection. */
 	UA_WriterGroupConfig writerGroupConfig;
 	memset(&writerGroupConfig, 0, sizeof(UA_WriterGroupConfig));
@@ -129,7 +128,8 @@ void addWriterGroup(UA_Server *server) {
  * A DataSetWriter (DSW) is the glue between the WG and the PDS. The DSW is linked to exactly one
  * PDS and contains additional informations for the message generation.
  */
-void addDataSetWriter(UA_Server *server) {
+void addDataSetWriter(UA_Server *server)
+{
 	/* We need now a DataSetWriter within the WriterGroup. This means we must
 	 * create a new DataSetWriterConfig and add call the addWriterGroup function. */
 	UA_NodeId dataSetWriterIdent;
@@ -147,7 +147,8 @@ void addDataSetWriter(UA_Server *server) {
 	printf("ID: %x\n", dataSetWriterConfig.dataSetWriterId);
 }
 
-void parseTemperature(UA_Server *server, const UA_NodeId nodeid) {
+void parseTemperature(UA_Server *server, const UA_NodeId nodeid)
+{
 	float temp;
 	char *buf = UA_malloc(sizeof(char) * 512);
 	temp = (temprature_sens_read() - 32) / 1.8;
@@ -162,7 +163,8 @@ void parseTemperature(UA_Server *server, const UA_NodeId nodeid) {
 	UA_Server_writeValue(server, nodeid, value);
 }
 
-void opcua_task(void *pvParameter) {
+void opcua_task(void *pvParameter)
+{
 	UA_ServerConfig *config;
 	ESP_LOGI(TAG, "Fire up OPC UA Server.");
 	//config = UA_ServerConfig_new_customBuffer(4840, NULL, 8192, 8192);
@@ -196,7 +198,8 @@ void opcua_task(void *pvParameter) {
 	vTaskDelete(NULL);
 }
 
-static esp_err_t event_handler(void *ctx, system_event_t *event) {
+static esp_err_t event_handler(void *ctx, system_event_t *event)
+{
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
@@ -212,8 +215,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 			break;
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
-			ESP_ERROR_CHECK(esp_wifi_connect())
-			;
+			ESP_ERROR_CHECK(esp_wifi_connect());
 			break;
 		default:
 			break;
@@ -221,12 +223,12 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
 	return ESP_OK;
 }
 
-void wifi_scan(void) {
+void wifi_scan(void)
+{
 	tcpip_adapter_init();
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
-	;
+	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	wifi_config_t wifi_config = {
 			.sta = {
