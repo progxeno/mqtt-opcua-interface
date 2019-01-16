@@ -19,7 +19,8 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			/* This is a workaround as ESP32 WiFi libs don't currently
 			 auto-reassociate. */
-			ESP_ERROR_CHECK(esp_wifi_connect());
+			ESP_ERROR_CHECK(esp_wifi_connect())
+			;
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			break;
 		default:
@@ -33,7 +34,8 @@ void initialise_wifi(void)
 	tcpip_adapter_init();
 	wifi_event_group = xEventGroupCreate();
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
+	;
 
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
@@ -53,8 +55,12 @@ void mqtt_task(void *pvParameters)
 	ESP_ERROR_CHECK(spi_master_config());
 
 	int ret;
-	char buf[10];
+	char* buf;
+	char macbuf[17];
 	double sensor_data;
+	float temp;
+	cJSON* msg;
+
 	/* Wait for the callback to set the CONNECTED_BIT in the
 	 event group.
 	 */
@@ -72,14 +78,18 @@ void mqtt_task(void *pvParameters)
 	ESP_LOGI(TAG, "MQTTClientInit  ...");
 	MQTTClientInit(&client, &network, 2000, mqtt_sendBuf, MQTT_BUF_SIZE, mqtt_readBuf, MQTT_BUF_SIZE);
 
-	MQTTString clientId = MQTTString_initializer;
+	MQTTString clientId = MQTTString_initializer
+	;
 	clientId.cstring = "MBEDTLS_MQTT";
-	MQTTString username = MQTTString_initializer;
+	MQTTString username = MQTTString_initializer
+	;
 	username.cstring = CONFIG_MQTT_USER;
-	MQTTString password = MQTTString_initializer;
+	MQTTString password = MQTTString_initializer
+	;
 	password.cstring = CONFIG_MQTT_PASS;
 
-	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+	MQTTPacket_connectData data = MQTTPacket_connectData_initializer
+	;
 	data.clientID = clientId;
 	data.willFlag = 0;
 	data.MQTTVersion = 4; // 3 = 3.1 4 = 3.1.1
@@ -93,10 +103,24 @@ void mqtt_task(void *pvParameters)
 	if (ret != SUCCESS) {
 		ESP_LOGI(TAG, "MQTTConnect not SUCCESS: %d", ret);
 	}
+
+	esp_base_mac_addr_set(mac);
+	esp_efuse_read_mac(mac);
+	sprintf(macbuf, "%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
 	while (1) {
 
+		msg = cJSON_CreateObject();
+		temp = (temprature_sens_read() - 32) / 1.8;
 		ret = spi_master_read_sensor(&sensor_data);
-		sprintf(buf, "%f", sensor_data);
+
+		printf("Sensordata: %f\n", sensor_data);
+
+		cJSON_AddStringToObject(msg, "mac", macbuf);
+		cJSON_AddNumberToObject(msg, "value", sensor_data);
+		cJSON_AddNumberToObject(msg, "Temperature", temp);
+
+		buf = cJSON_Print(msg);
 
 		MQTTMessage message;
 		//	ESP_LOGI(TAG, "MQTTPublish  ... %s",(uint8_t *) buf);
@@ -112,9 +136,13 @@ void mqtt_task(void *pvParameters)
 				ESP_LOGE(TAG, "I2C Timeout");
 			} else if (ret == ESP_OK) {
 				MQTTPublish(&client, "device/id1/data", &message);
+
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}
 		}
+		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
+		cJSON_Delete(msg);
+		free(buf);
 	}
 }

@@ -17,7 +17,8 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
 			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
 			break;
 		case SYSTEM_EVENT_STA_DISCONNECTED:
-			ESP_ERROR_CHECK(esp_wifi_connect());
+			ESP_ERROR_CHECK(esp_wifi_connect())
+			;
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			break;
 		default:
@@ -32,12 +33,29 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 	ESP_ERROR_CHECK(spi_master_config());
 
 	int ret;
-	char buf[10];
+	char* buf;
+	char macbuf[17];
 	double sensor_data;
+	float temp;
+	cJSON* msg;
+
+	esp_base_mac_addr_set(mac);
+	esp_efuse_read_mac(mac);
+	sprintf(macbuf, "%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	//macbuf = (char *) mac;
 
 	while (1) {
+		msg = cJSON_CreateObject();
+		temp = (temprature_sens_read() - 32) / 1.8;
 		ret = spi_master_read_sensor(&sensor_data);
-		sprintf(buf, "%f", sensor_data);
+
+		printf("Sensordata: %f\n", sensor_data);
+
+		cJSON_AddStringToObject(msg, "mac", macbuf);
+		cJSON_AddNumberToObject(msg, "value", sensor_data);
+		cJSON_AddNumberToObject(msg, "Temperature", temp);
+
+		buf = cJSON_Print(msg);
 
 		if (status) {
 			if (ret == ESP_ERR_TIMEOUT) {
@@ -48,6 +66,9 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}
 		}
+		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
+		cJSON_Delete(msg);
+		free(buf);
 	}
 
 	return ESP_OK;
@@ -58,7 +79,8 @@ void wifi_init(void)
 	tcpip_adapter_init();
 	wifi_event_group = xEventGroupCreate();
 	ESP_ERROR_CHECK(esp_event_loop_init(wifi_event_handler, NULL));
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
+	;
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 	wifi_config_t wifi_config = {

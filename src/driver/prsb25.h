@@ -90,9 +90,12 @@ static esp_err_t spi_master_read_sensor(double *value)
 	int ret = -1;
 	double phase = 0.0;
 	const double factor = 360.0 / 16383.0;
+	/// Block for 1ms.
+	const TickType_t xDelay = 1 / portTICK_PERIOD_MS;
 
 	/// Prepare transaction parameter
 	uint8_t tx[] = {
+			0x00,
 			0x00,
 			0xFF,
 			0xFF,
@@ -116,7 +119,7 @@ static esp_err_t spi_master_read_sensor(double *value)
 	}
 
 	/// Mandatory
-	vTaskDelay(1 / portTICK_RATE_MS);
+	vTaskDelay(xDelay);
 
 	/// NOP
 	tx[0] = 0x00;
@@ -134,7 +137,7 @@ static esp_err_t spi_master_read_sensor(double *value)
 	}
 
 	/// Mandatory
-	vTaskDelay(1 / portTICK_RATE_MS);
+	vTaskDelay(xDelay);
 
 	/// Extract and convert the angle to degrees
 	unsigned int alpha = rx[0] | (rx[1] & 0x3F) << 8;
@@ -147,13 +150,15 @@ static esp_err_t spi_master_read_sensor(double *value)
 	/// Extract the CRC
 	uint8_t crc = rx[7];
 
+	//vTaskDelay(500 / portTICK_PERIOD_MS);
+
 //    ESP_LOGI(TAG, "crc %d\talpha %d\tcount %2d\n", crc, alpha, counter);
-//    ESP_LOGI(TAG, "error %d\tphase %2.5f\tdiff %2.5f\n", error, phase, diff);
+//    ESP_LOGI(TAG, "error %d\tphase %2.5f\n", error, phase);
 
 	phase = (double) alpha * factor;
 
 	*value = phase;
-//	ESP_LOGI(TAG, "Data: %f", diff);
+//	ESP_LOGI(TAG, "Data: %f\n", phase);
 
 	return ret;
 }

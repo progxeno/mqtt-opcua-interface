@@ -41,6 +41,7 @@ extern "C" {
 #include "mbedtls/error.h"
 #include "mbedtls/certs.h"
 
+#include "cJSON.h"
 #include "MQTTClient.h"
 
 #define PRSB_25
@@ -56,6 +57,8 @@ extern "C" {
 #define MQTT_BUF_SIZE 1000
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
 
+	uint8_t temprature_sens_read();
+	uint8_t mac[6];
 	/* The event group allows multiple bits for each event,
 	 but we only care about one event - are we connected
 	 to the AP with an IP? */

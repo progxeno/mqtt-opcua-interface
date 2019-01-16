@@ -27,6 +27,7 @@ extern "C" {
 #include "freertos/queue.h"
 #include "freertos/event_groups.h"
 
+#include "cJSON.h"
 #include "mqtt_client.h"
 
 #define PRSB_25
@@ -40,6 +41,8 @@ extern "C" {
 	/* The event group allows multiple bits for each event,
 	 but we only care about one event - are we connected
 	 to the AP with an IP? */
+	uint8_t temprature_sens_read();
+	uint8_t mac[6];
 	const static int CONNECTED_BIT = BIT0;
 	static EventGroupHandle_t wifi_event_group;
 
