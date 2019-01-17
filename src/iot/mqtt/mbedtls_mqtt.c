@@ -145,15 +145,14 @@ void mqtt_task(void *pvParameters)
 				ESP_LOGE(TAG, "I2C Timeout");
 			} else if (ret == ESP_OK) {
 				MQTTPublish(&client, "device/id1/data", &message);
-
-			} else if (ret == ESP_ERR_NOT_FOUND) {
-				ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
 				printf("Sensordata: %f\n", sensor_data);
+			} else if (ret == ESP_ERR_NOT_FOUND) {
+				//ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}
 
-		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
+		//ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
 		cJSON_Delete(jsonMsg);
 		free(mqttMsg);
 	}
