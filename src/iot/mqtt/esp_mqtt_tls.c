@@ -30,28 +30,34 @@ esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
 	// your_context_t *context = event->context;
 	esp_mqtt_client_handle_t client = event->client;
+#ifdef SRC_DRIVER_PRSB25_H_
 	ESP_ERROR_CHECK(spi_master_config());
+	double sensor_data;
+#elif defined DRIVER_MB1222_H_
+	ESP_ERROR_CHECK(i2c_master_init());
+	uint16_t sensor_data;
+#endif
 
 	int ret;
 	char* mqttMsg;
 	char macAdr[17];
-	double sensor_data;
 	float temp;
 	cJSON* jsonMsg;
 
 	esp_base_mac_addr_set(mac);
-	//esp_efuse_read_mac(mac);
 	esp_efuse_mac_get_default(mac);
 	sprintf(macAdr, "%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-	printf("%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-	//macAdr = (char *) mac;
+	printf("%x %x %x %x %x %x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
 	while (1) {
 		jsonMsg = cJSON_CreateObject();
 		temp = (temprature_sens_read() - 32) / 1.8;
-		ret = spi_master_read_sensor(&sensor_data);
 
-		printf("Sensordata: %f\n", sensor_data);
+#ifdef SRC_DRIVER_PRSB25_H_
+		ret = spi_master_read_sensor(&sensor_data);
+#elif defined DRIVER_MB1222_H_
+		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
+#endif
 
 		cJSON_AddStringToObject(jsonMsg, "mac", macAdr);
 		cJSON_AddNumberToObject(jsonMsg, "value", sensor_data);
@@ -59,15 +65,15 @@ esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 
 		mqttMsg = cJSON_Print(jsonMsg);
 
-		if (status) {
 			if (ret == ESP_ERR_TIMEOUT) {
 				ESP_LOGE(TAG, "Communication Timeout");
 			} else if (ret == ESP_OK) {
 				esp_mqtt_client_publish(client, "device/id1/data", mqttMsg, 0, 0, 0);
+				printf("Sensordata: %f\n", sensor_data);
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}
-		}
+
 		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
 		cJSON_Delete(jsonMsg);
 		free(mqttMsg);

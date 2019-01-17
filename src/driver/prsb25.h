@@ -50,7 +50,7 @@ static char *TAG = "spi";
 #define PIN_NUM_SS		5
 
 spi_device_handle_t spi_handle;
-static bool status = true;
+//static bool status = true;
 
 static uint8_t crc_array[256] = {
 0x00, 0x2F, 0x5E, 0x71, 0xBC, 0x93, 0xE2, 0xCD, 0x57, 0x78, 0x09, 0x26,

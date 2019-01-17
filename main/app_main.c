@@ -16,7 +16,7 @@
 
 #include "esp_log.h"
 
-#define MBED_TLS_MQTT
+#define ESP_MQTT_TLS
 
 #ifdef ESP_MQTT_TLS
 	#include "esp_mqtt_tls.h"

@@ -52,19 +52,25 @@ void initialise_wifi(void)
 void mqtt_task(void *pvParameters)
 {
 	Network network;
+#ifdef SRC_DRIVER_PRSB25_H_
 	ESP_ERROR_CHECK(spi_master_config());
+	double sensor_data;
+#elif defined DRIVER_MB1222_H_
+	ESP_ERROR_CHECK(i2c_master_init());
+	uint16_t sensor_data;
+#endif
 
 	int ret;
 	char* mqttMsg;
 	char macAdr[17];
-	double sensor_data;
 	float temp;
 	cJSON* jsonMsg;
 
 	/* Wait for the callback to set the CONNECTED_BIT in the
 	 event group.
 	 */
-	xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, false, true, portMAX_DELAY);
+	xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, false, true,
+	portMAX_DELAY);
 	ESP_LOGI(TAG, "Connected to AP");
 
 	ESP_LOGI(TAG, "Start MQTT Task ...");
@@ -105,16 +111,20 @@ void mqtt_task(void *pvParameters)
 	}
 
 	esp_base_mac_addr_set(mac);
-	esp_efuse_read_mac(mac);
+	esp_efuse_mac_get_default(mac);
 	sprintf(macAdr, "%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	printf("%x %x %x %x %x %x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
 	while (1) {
 
 		jsonMsg = cJSON_CreateObject();
 		temp = (temprature_sens_read() - 32) / 1.8;
-		ret = spi_master_read_sensor(&sensor_data);
 
-		printf("Sensordata: %f\n", sensor_data);
+#ifdef SRC_DRIVER_PRSB25_H_
+		ret = spi_master_read_sensor(&sensor_data);
+#elif defined DRIVER_MB1222_H_
+		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
+#endif
 
 		cJSON_AddStringToObject(jsonMsg, "mac", macAdr);
 		cJSON_AddNumberToObject(jsonMsg, "value", sensor_data);
@@ -131,7 +141,6 @@ void mqtt_task(void *pvParameters)
 		message.payload = (uint16_t *) mqttMsg;
 		message.payloadlen = strlen(mqttMsg) + 1;
 
-		if (status) {
 			if (ret == ESP_ERR_TIMEOUT) {
 				ESP_LOGE(TAG, "I2C Timeout");
 			} else if (ret == ESP_OK) {
@@ -139,10 +148,11 @@ void mqtt_task(void *pvParameters)
 
 			} else if (ret == ESP_ERR_NOT_FOUND) {
 				ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
+				printf("Sensordata: %f\n", sensor_data);
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}
-		}
+
 		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
 		cJSON_Delete(jsonMsg);
 		free(mqttMsg);

@@ -44,7 +44,7 @@ extern "C" {
 	 to the AP with an IP? */
 	uint8_t temprature_sens_read();
 	uint8_t mac[6];
-	const int CONNECTED_BIT = BIT0;
+	const static int CONNECTED_BIT = BIT0;
 	EventGroupHandle_t wifi_event_group;
 
 	extern const uint8_t ca_pem_start[] asm("_binary_ca_pem_start");

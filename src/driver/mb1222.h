@@ -21,8 +21,30 @@
 #define MQTT_USE_TLS
 #endif
 
-#include <driver/i2c.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+#include <math.h>
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#include "freertos/queue.h"
+
+#include "lwip/sockets.h"
+#include "lwip/dns.h"
+#include "lwip/netdb.h"
+#include "lwip/igmp.h"
+
+#include "esp_wifi.h"
+#include "esp_system.h"
+#include "esp_event.h"
+#include "esp_event_loop.h"
+#include "nvs_flash.h"
+#include "soc/rtc_cntl_reg.h"
+#include "rom/cache.h"
+#include "driver/i2c.h"
 #include "esp_log.h"
 
 static char *TAG = "i2c";
@@ -107,23 +129,23 @@ static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint16_t *data)
 	return ret;
 }
 
-static void i2c_process_task(void *arg)
-{
-	int ret;
-	uint16_t sensor_data;
-
-	while (1) {
-		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
-
-		if (ret == ESP_ERR_TIMEOUT) {
-			ESP_LOGE(TAG, "I2C Timeout");
-		} else if (ret == ESP_OK) {
-			printf("\nsensor val: %i [cm]\n", sensor_data);
-		} else {
-			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
-		}
-	}
-	vTaskDelete (NULL);
-}
+//static void i2c_process_task(void *arg)
+//{
+//	int ret;
+//	uint16_t sensor_data;
+//
+//	while (1) {
+//		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
+//
+//		if (ret == ESP_ERR_TIMEOUT) {
+//			ESP_LOGE(TAG, "I2C Timeout");
+//		} else if (ret == ESP_OK) {
+//			printf("\nsensor val: %i [cm]\n", sensor_data);
+//		} else {
+//			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
+//		}
+//	}
+//	vTaskDelete (NULL);
+//}
 
 #endif /* DRIVER_MB1222_H_ */
