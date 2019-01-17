@@ -55,7 +55,7 @@ void addDataSetField(UA_Server *server)
 	/* Add a field to the previous created PublishedDataSet */
 	UA_NodeId dataSetFieldIdent;
 	UA_NodeId createdNodeId;
-	UA_DataSetFieldConfig dataSetFieldDate;
+//	UA_DataSetFieldConfig dataSetFieldDate;
 	UA_DataSetFieldConfig dataSetFieldTemp;
 
 //	memset(&dataSetFieldDate, 0, sizeof(UA_DataSetFieldConfig));
@@ -138,7 +138,7 @@ void addDataSetWriter(UA_Server *server)
 	dataSetWriterConfig.name = UA_STRING("Demo DataSetWriter");
 
 	esp_base_mac_addr_set(mac);
-	esp_efuse_read_mac(mac);
+	esp_efuse_mac_get_default(mac);
 	printf("ID: %x %x %x %x %x %x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
 	dataSetWriterConfig.dataSetWriterId = (mac[0] + mac[1] + mac[2] + mac[3] + mac[4] + mac[5]);
@@ -155,7 +155,7 @@ void parseTemperature(UA_Server *server, const UA_NodeId nodeid)
 	printf("Returned Temperature: %.6f\n", temp);
 	snprintf(buf, 512, "%f", temp);
 	printf("Read Temperature : %s\n", buf);
-	UA_String temperature = UA_STRING(buf);
+	//UA_String temperature = UA_STRING(buf);
 
 	//UA_String temperature = UA_STRING("Temperature as string!"); //Change here as read numeric temperature value
 	UA_Variant value;
