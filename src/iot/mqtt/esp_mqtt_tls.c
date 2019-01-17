@@ -7,7 +7,7 @@
 
 #include "esp_mqtt_tls.h"
 
-static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
+esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
 {
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:
@@ -26,49 +26,51 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
 	}
 	return ESP_OK;
 }
-static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
+esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
 	// your_context_t *context = event->context;
 	esp_mqtt_client_handle_t client = event->client;
 	ESP_ERROR_CHECK(spi_master_config());
 
 	int ret;
-	char* buf;
-	char macbuf[17];
+	char* mqttMsg;
+	char macAdr[17];
 	double sensor_data;
 	float temp;
-	cJSON* msg;
+	cJSON* jsonMsg;
 
 	esp_base_mac_addr_set(mac);
-	esp_efuse_read_mac(mac);
-	sprintf(macbuf, "%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-	//macbuf = (char *) mac;
+	//esp_efuse_read_mac(mac);
+	esp_efuse_mac_get_default(mac);
+	sprintf(macAdr, "%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	printf("%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	//macAdr = (char *) mac;
 
 	while (1) {
-		msg = cJSON_CreateObject();
+		jsonMsg = cJSON_CreateObject();
 		temp = (temprature_sens_read() - 32) / 1.8;
 		ret = spi_master_read_sensor(&sensor_data);
 
 		printf("Sensordata: %f\n", sensor_data);
 
-		cJSON_AddStringToObject(msg, "mac", macbuf);
-		cJSON_AddNumberToObject(msg, "value", sensor_data);
-		cJSON_AddNumberToObject(msg, "Temperature", temp);
+		cJSON_AddStringToObject(jsonMsg, "mac", macAdr);
+		cJSON_AddNumberToObject(jsonMsg, "value", sensor_data);
+		cJSON_AddNumberToObject(jsonMsg, "Temperature", temp);
 
-		buf = cJSON_Print(msg);
+		mqttMsg = cJSON_Print(jsonMsg);
 
 		if (status) {
 			if (ret == ESP_ERR_TIMEOUT) {
 				ESP_LOGE(TAG, "Communication Timeout");
 			} else if (ret == ESP_OK) {
-				esp_mqtt_client_publish(client, "device/id1/data", buf, 0, 0, 0);
+				esp_mqtt_client_publish(client, "device/id1/data", mqttMsg, 0, 0, 0);
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}
 		}
 		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
-		cJSON_Delete(msg);
-		free(buf);
+		cJSON_Delete(jsonMsg);
+		free(mqttMsg);
 	}
 
 	return ESP_OK;

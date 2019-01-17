@@ -50,7 +50,7 @@ static char *TAG = "spi";
 #define PIN_NUM_SS		5
 
 spi_device_handle_t spi_handle;
-static bool status = true;
+bool status = true;
 
 /// Initialize the SPI2 device in master mode
 static esp_err_t spi_master_config(void)
@@ -164,27 +164,27 @@ static esp_err_t spi_master_read_sensor(double *value)
 }
 
 /// Full buffer DMA transfer
-static void spi_process_task(void *arg)
-{
-	int ret;
-	char buf[10];
-	double sensor_data;
-
-	ESP_ERROR_CHECK(spi_master_config());
-
-	while (1) {
-		ret = spi_master_read_sensor(&sensor_data);
-		sprintf(buf, "%f", sensor_data);
-		if (ret == ESP_ERR_TIMEOUT) {
-			ESP_LOGE(TAG, "SPI Timeout");
-		} else if (ret == ESP_OK) {
-			ESP_LOGI(TAG, "\nsensor val: %s\n", buf);
-		} else {
-			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
-		}
-	}
-	vTaskDelete(NULL);
-}
+//static void spi_process_task(void *arg)
+//{
+//	int ret;
+//	char buf[10];
+//	double sensor_data;
+//
+//	ESP_ERROR_CHECK(spi_master_config());
+//
+//	while (1) {
+//		ret = spi_master_read_sensor(&sensor_data);
+//		sprintf(buf, "%f", sensor_data);
+//		if (ret == ESP_ERR_TIMEOUT) {
+//			ESP_LOGE(TAG, "SPI Timeout");
+//		} else if (ret == ESP_OK) {
+//			ESP_LOGI(TAG, "\nsensor val: %s\n", buf);
+//		} else {
+//			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
+//		}
+//	}
+//	vTaskDelete(NULL);
+//}
 
 #endif /// SRC_DRIVER_PRSB25_H_
 

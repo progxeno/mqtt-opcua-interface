@@ -6,7 +6,7 @@
  */
 #include "mbedtls_mqtt.h"
 
-static esp_err_t event_handler(void *ctx, system_event_t *event)
+esp_err_t event_handler(void *ctx, system_event_t *event)
 {
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:
@@ -55,11 +55,11 @@ void mqtt_task(void *pvParameters)
 	ESP_ERROR_CHECK(spi_master_config());
 
 	int ret;
-	char* buf;
-	char macbuf[17];
+	char* mqttMsg;
+	char macAdr[17];
 	double sensor_data;
 	float temp;
-	cJSON* msg;
+	cJSON* jsonMsg;
 
 	/* Wait for the callback to set the CONNECTED_BIT in the
 	 event group.
@@ -106,30 +106,30 @@ void mqtt_task(void *pvParameters)
 
 	esp_base_mac_addr_set(mac);
 	esp_efuse_read_mac(mac);
-	sprintf(macbuf, "%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	sprintf(macAdr, "%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
 	while (1) {
 
-		msg = cJSON_CreateObject();
+		jsonMsg = cJSON_CreateObject();
 		temp = (temprature_sens_read() - 32) / 1.8;
 		ret = spi_master_read_sensor(&sensor_data);
 
 		printf("Sensordata: %f\n", sensor_data);
 
-		cJSON_AddStringToObject(msg, "mac", macbuf);
-		cJSON_AddNumberToObject(msg, "value", sensor_data);
-		cJSON_AddNumberToObject(msg, "Temperature", temp);
+		cJSON_AddStringToObject(jsonMsg, "mac", macAdr);
+		cJSON_AddNumberToObject(jsonMsg, "value", sensor_data);
+		cJSON_AddNumberToObject(jsonMsg, "Temperature", temp);
 
-		buf = cJSON_Print(msg);
+		mqttMsg = cJSON_Print(jsonMsg);
 
 		MQTTMessage message;
-		//	ESP_LOGI(TAG, "MQTTPublish  ... %s",(uint8_t *) buf);
+		//	ESP_LOGI(TAG, "MQTTPublish  ... %s",(uint8_t *) mqttMsg);
 
 		message.qos = QOS0;
 		message.retained = false;
 		message.dup = false;
-		message.payload = (uint16_t *) buf;
-		message.payloadlen = strlen(buf) + 1;
+		message.payload = (uint16_t *) mqttMsg;
+		message.payloadlen = strlen(mqttMsg) + 1;
 
 		if (status) {
 			if (ret == ESP_ERR_TIMEOUT) {
@@ -142,7 +142,7 @@ void mqtt_task(void *pvParameters)
 			}
 		}
 		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
-		cJSON_Delete(msg);
-		free(buf);
+		cJSON_Delete(jsonMsg);
+		free(mqttMsg);
 	}
 }

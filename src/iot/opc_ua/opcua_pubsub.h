@@ -33,7 +33,6 @@ extern "C" {
 #include <unistd.h>
 #include <lwip/sockets.h>
 #include "open62541.h"
-#include "DHT22.h"
 
 #define DEFAULT_SSID "MasterarbeitPi"
 #define DEFAULT_PWD "MasterSMC2018"
@@ -47,7 +46,7 @@ extern "C" {
 
 	uint8_t temprature_sens_read();
 
-	static UA_Boolean running = true;
+	UA_Boolean running = true;
 	UA_NodeId connectionIdent, publishedDataSetIdent, writerGroupIdent;
 
 	void addPubSubConnection(UA_Server *server);
@@ -57,7 +56,7 @@ extern "C" {
 	void addDataSetWriter(UA_Server *server);
 	void parseTemperature(UA_Server *server, const UA_NodeId nodeid);
 	void opcua_task(void *pvParameter);
-	static esp_err_t event_handler(void *ctx, system_event_t *event);
+	esp_err_t event_handler(void *ctx, system_event_t *event);
 	void wifi_scan(void);
 
 #endif /* SRC_IOT_OPCUA_PUBSUB_H_ */

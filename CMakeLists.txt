@@ -6,7 +6,7 @@ set(PROJECT_ROOT "${DEV_ROOT}/")
 
 set(SUBMODULE_ROOT "${DEV_ROOT}/../../../")
 
-set(PROJECT_NAME "mqtt_ssl")
+set(PROJECT_NAME "Masterarbeit")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 

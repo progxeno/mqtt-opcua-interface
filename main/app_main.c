@@ -6,6 +6,7 @@
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "esp_event_loop.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -25,8 +26,8 @@
 	#include "opcua_pubsub.h"
 #elif defined OPCUA_SERVER
 	#include "opcua_server.h"
-#elif defined LWMQTT
-	#include "lw_mbedtls_mqtt.h"
+//#elif defined LWMQTT
+//	#include "lw_mbedtls_mqtt.h"
 #endif
 
 void app_main()

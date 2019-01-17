@@ -86,7 +86,7 @@ void addTemperatureNode(UA_Server *server)
 								NULL);
 }
 
-static esp_err_t event_handler(void *ctx, system_event_t *event)
+esp_err_t event_handler(void *ctx, system_event_t *event)
 {
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:

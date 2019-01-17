@@ -52,8 +52,6 @@ extern "C" {
 #include "mb1222.h"
 #endif
 
-//#define MQTT_SERVER "raspberrypi"
-//#define MQTT_PORT 8883
 #define MQTT_BUF_SIZE 1000
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
 
@@ -64,13 +62,13 @@ extern "C" {
 	 to the AP with an IP? */
 	const static int CONNECTED_BIT = BIT0;
 
-	static unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
-	static unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
+	unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
+	unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
 
 	/* FreeRTOS event group to signal when we are connected & ready to make a request */
-	static EventGroupHandle_t wifi_event_group;
+	EventGroupHandle_t wifi_event_group;
 
-	static esp_err_t event_handler(void *ctx, system_event_t *event);
+	esp_err_t event_handler(void *ctx, system_event_t *event);
 	void initialise_wifi(void);
 	void mqtt_task(void *pvParameters);
 

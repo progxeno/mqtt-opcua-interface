@@ -30,7 +30,6 @@ extern "C" {
 #include <lwip/sockets.h>
 #include "tcpip_adapter.h"
 #include "open62541.h"
-#include "DHT22.h"
 //#include "myNodeSet.h"
 
 #define DEFAULT_SSID "MasterarbeitPi"
@@ -43,12 +42,12 @@ extern "C" {
 
 	UA_ServerConfig *config;
 	float temperature;
-	static UA_Boolean running = true;
+	UA_Boolean running = true;
 
 	void addTemperatureNode(UA_Server *server);
 	void sensor_task(void *pvParameter);
 	void opcua_task(void *pvParameter);
 	void addTemperatureNode(UA_Server *server);
-	static esp_err_t event_handler(void *ctx, system_event_t *event);
+	esp_err_t event_handler(void *ctx, system_event_t *event);
 	void wifi_scan(void);
 #endif /* SRC_IOT_OPC_UA_OPCUA_SERVER_H_ */

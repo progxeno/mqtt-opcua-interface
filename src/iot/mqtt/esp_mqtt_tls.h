@@ -20,6 +20,7 @@ extern "C" {
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "esp_event_loop.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -43,14 +44,14 @@ extern "C" {
 	 to the AP with an IP? */
 	uint8_t temprature_sens_read();
 	uint8_t mac[6];
-	const static int CONNECTED_BIT = BIT0;
-	static EventGroupHandle_t wifi_event_group;
+	const int CONNECTED_BIT = BIT0;
+	EventGroupHandle_t wifi_event_group;
 
 	extern const uint8_t ca_pem_start[] asm("_binary_ca_pem_start");
 	extern const uint8_t ca_pem_end[] asm("_binary_ca_pem_end");
 
-	static esp_err_t wifi_event_handler(void *ctx, system_event_t *event);
-	static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event);
+	esp_err_t wifi_event_handler(void *ctx, system_event_t *event);
+	esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event);
 
 	void wifi_init(void);
 	void mqtt_app_start(void);
