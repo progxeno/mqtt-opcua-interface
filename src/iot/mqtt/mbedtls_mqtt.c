@@ -137,6 +137,8 @@ void mqtt_task(void *pvParameters)
 			} else if (ret == ESP_OK) {
 				MQTTPublish(&client, "device/id1/data", &message);
 
+			} else if (ret == ESP_ERR_NOT_FOUND) {
+				ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}
