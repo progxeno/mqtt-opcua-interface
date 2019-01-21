@@ -1,17 +1,17 @@
 # admin 
-user sentenz
+user admin
 topic readwrite #
 topic readwrite $SYS/#
 
-# 
-user master
-topic read #
-topic write master/#
+# operator
+user operator
+topic readwrite device/#
 
-#
+# client
 user client
 topic read device/#
 
-#
+# device
 user device
 topic write device/#
+

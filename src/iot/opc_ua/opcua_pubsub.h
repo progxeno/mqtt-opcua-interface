@@ -46,7 +46,7 @@ extern "C" {
 
 	uint8_t temprature_sens_read();
 
-	UA_Boolean running = true;
+	static UA_Boolean running = true;
 	UA_NodeId connectionIdent, publishedDataSetIdent, writerGroupIdent;
 
 	void addPubSubConnection(UA_Server *server);

@@ -88,7 +88,7 @@ void addDataSetField(UA_Server *server)
 							&createdNodeId);
 
 	//UA_NodeId_init(&createdNodeId);
-	//parseTemperature(server, createdNodeId);
+	parseTemperature(server, createdNodeId);
 	printf("Returned Temperature: %f\n", ((temprature_sens_read() - 32) / 1.8));
 	printf("NodeID: %s\n", (char*) &createdNodeId.identifier.string);
 

@@ -42,7 +42,7 @@ extern "C" {
 
 	UA_ServerConfig *config;
 	float temperature;
-	UA_Boolean running = true;
+	static UA_Boolean running = true;
 
 	void addTemperatureNode(UA_Server *server);
 	void sensor_task(void *pvParameter);

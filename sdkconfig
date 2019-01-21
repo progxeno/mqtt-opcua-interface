@@ -84,7 +84,7 @@ CONFIG_MONITOR_BAUD=115200
 # Application Settings
 #
 CONFIG_DEFAULT_SSID="MasterarbeitPi"
-CONFIG_DEFAULT_PWD="MasterSMC2018"
+CONFIG_DEFAULT_PWD="MasterarbeitPi@iot"
 CONFIG_MQTT_USER="device"
 CONFIG_MQTT_PASS="device@iot"
 CONFIG_MQTT_SERVER="raspberrypi"
