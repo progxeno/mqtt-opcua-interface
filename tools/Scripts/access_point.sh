@@ -199,6 +199,13 @@ wpa_pairwise=TKIP">>/etc/hostapd/hostapd.conf
       exit 0">>/etc/rc.local
       sudo service hostapd start
       sudo service dnsmasq start
+	  sudo cp /etc/hosts /etc/hosts.old
+	  echo "$IP_RANGE.1	raspberrypi">>/etc/hosts
+	  sudo cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.old
+	  cat /dev/null > /etc/wpa_supplicant/wpa_supplicant.conf
+      echo "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+	  update_config=1
+	  country=DE">>/etc/wpa_supplicant/wpa_supplicant.conf
       #sudo reboot
       ;;
     "option2 uninstall access point." )
@@ -358,7 +365,11 @@ wpa_pairwise=TKIP">>/etc/hostapd/hostapd.conf
       printf "My IP address is %s\n" "$_IP"
     fi
     exit 0">>/etc/rc.local
-    sudo reboot
+	
+	sudo cp /etc/hosts.old /etc/hosts
+	sudo cp /etc/wpa_supplicant/wpa_supplicant.conf.old /etc/wpa_supplicant/wpa_supplicant.conf
+	  
+    #sudo reboot
     ;;
     "option 3 exit." )
     echo "exit"
