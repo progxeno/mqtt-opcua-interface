@@ -206,7 +206,7 @@ wpa_pairwise=TKIP">>/etc/hostapd/hostapd.conf
       echo "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 	  update_config=1
 	  country=DE">>/etc/wpa_supplicant/wpa_supplicant.conf
-      #sudo reboot
+      sudo reboot
       ;;
     "option2 uninstall access point." )
     echo "elegiste la option 2"
@@ -369,7 +369,7 @@ wpa_pairwise=TKIP">>/etc/hostapd/hostapd.conf
 	sudo cp /etc/hosts.old /etc/hosts
 	sudo cp /etc/wpa_supplicant/wpa_supplicant.conf.old /etc/wpa_supplicant/wpa_supplicant.conf
 	  
-    #sudo reboot
+    sudo reboot
     ;;
     "option 3 exit." )
     echo "exit"
