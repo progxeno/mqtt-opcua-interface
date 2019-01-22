@@ -1,0 +1,44 @@
+Source:
+https://dl.espressif.com/doc/esp-idf/latest/get-started/windows-setup.html
+
+Download:
+https://dl.espressif.com/dl/esp32_win32_msys2_environment_and_toolchain-20170918.zip
+extract to C:/
+
+Open mingw32.exe
+mkdir esp
+
+Clone ESP32 specific API / libraries:
+
+cd ~/esp
+git clone --recursive https://github.com/espressif/esp-idf.git
+
+Create idf_path.sh in C:\msys32\etc\profile.d and add this line :
+export IDF_PATH="C:/msys32/home/UserName/esp/esp-idf"
+
+Reinstall Setuptools for valid Toolchain:
+python -m pip install --upgrade pip
+
+python -m pip uninstall -y setuptools
+pacman -S mingw-w64-i686-python2-setuptools mingw-w64-i686-python2-cryptography
+
+python -m pip install -r $IDF_PATH/requirements.txt
+	If Fails:
+		Check requirements.txt:
+
+# This is a list of python packages needed for ESP-IDF. This file is used with pip.
+# Please see the Get Started section of the ESP-IDF Programming Guide for further information.
+#
+setuptools
+# The setuptools package is required to install source distributions and on some systems is not installed by default.
+# Please keep it as the first item of this list.
+#
+pyserial>=3.0
+future>=0.15.2
+cryptography
+
+	run python -m pip install -r $IDF_PATH/requirements.txt again
+
+Seriellen Port (ESP32) ändern:
+Geräte Manager -> gerät auswählen -> Eigenschaften -> Anschlusseinstellungen -> Erweitert:
+COM-Anschlussnummer: COM15
