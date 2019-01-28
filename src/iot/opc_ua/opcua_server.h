@@ -32,16 +32,11 @@ extern "C" {
 #include "open62541.h"
 //#include "myNodeSet.h"
 
-#define DEFAULT_SSID "MasterarbeitPi"
-#define DEFAULT_PWD "MasterSMC2018"
-//#define DEFAULT_SSID "smc@iot"
-//#define DEFAULT_PWD "12345678iot"
-
 #define TAG "OPC_UA_PUBSUB"
 #define BLINK_GPIO 1
 
 	UA_ServerConfig *config;
-	float temperature;
+	uint8_t temprature_sens_read();
 	static UA_Boolean running = true;
 
 	void addTemperatureNode(UA_Server *server);
@@ -49,5 +44,5 @@ extern "C" {
 	void opcua_task(void *pvParameter);
 	void addTemperatureNode(UA_Server *server);
 	esp_err_t event_handler(void *ctx, system_event_t *event);
-	void wifi_scan(void);
+	void wifi_scan2(void);
 #endif /* SRC_IOT_OPC_UA_OPCUA_SERVER_H_ */

@@ -41,7 +41,7 @@ void addPublishedDataSet(UA_Server *server)
 	publishedDataSetConfig.name = UA_STRING("Demo PDS");
 	/* Create new PublishedDataSet based on the PublishedDataSetConfig. */
 	UA_AddPublishedDataSetResult s = UA_Server_addPublishedDataSet(server, &publishedDataSetConfig, &publishedDataSetIdent);
-	printf("Add PubSub Connection Status Code: %d\n", s.addResult);
+	printf("Add Publish DateSet Status Code: %d\n", s.addResult);
 
 }
 
@@ -54,10 +54,8 @@ void addDataSetField(UA_Server *server)
 
 	/* Add a field to the previous created PublishedDataSet */
 	UA_NodeId dataSetFieldIdent;
-	UA_NodeId createdNodeId;
-//	UA_DataSetFieldConfig dataSetFieldDate;
+	UA_DataSetFieldConfig dataSetFieldDate;
 	UA_DataSetFieldConfig dataSetFieldTemp;
-
 //	memset(&dataSetFieldDate, 0, sizeof(UA_DataSetFieldConfig));
 //	dataSetFieldDate.dataSetFieldType = UA_PUBSUB_DATASETFIELD_VARIABLE;
 //	dataSetFieldDate.field.variable.fieldNameAlias = UA_STRING("Server localtime");
@@ -65,41 +63,41 @@ void addDataSetField(UA_Server *server)
 //	dataSetFieldDate.field.variable.publishParameters.publishedVariable = UA_NODEID_NUMERIC(0, UA_NS0ID_SERVER_SERVERSTATUS_CURRENTTIME);
 //	dataSetFieldDate.field.variable.publishParameters.attributeId = UA_ATTRIBUTEID_VALUE;
 //	UA_Server_addDataSetField(server, publishedDataSetIdent, &dataSetFieldDate, &dataSetFieldIdent);
-
-	float temp;
-	char *buf = UA_malloc(sizeof(char) * 512);
-	temp = (temprature_sens_read() - 32) / 1.8;
-	printf("Returned Temperature: %.6f\n", temp);
-	snprintf(buf, 512, "%f", temp);
-
 	UA_VariableAttributes attr = UA_VariableAttributes_default;
 	attr.minimumSamplingInterval = 0.000000;
 	attr.userAccessLevel = 3;
 	attr.accessLevel = 3;
 	attr.valueRank = -1;
-	attr.dataType = UA_NODEID_STRING(0, buf); //(0, 12); //6 for INT32
-	UA_String classVar = UA_STRING(buf);
-	UA_Variant_setScalar(&attr.value, &classVar, &UA_TYPES[UA_TYPES_FLOAT]);
+	attr.dataType = UA_NODEID_NUMERIC(0, 12); //6 for INT32
+	UA_String classVar = UA_STRING("Temperature: 21 C");
+	UA_Variant_setScalar(&attr.value, &classVar, &UA_TYPES[UA_TYPES_STRING]);
+//
+	UA_StatusCode addNodeStat = UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, UA_NODEID_NUMERIC(1, 6001),
+														UA_NODEID_NUMERIC(0, UA_NS0ID_PUBLISHSUBSCRIBE), UA_NODEID_NUMERIC(0, 47),
+														UA_QUALIFIEDNAME(1, "Test"), UA_NODEID_NUMERIC(0, 63), (const UA_NodeAttributes*) &attr,
+														&UA_TYPES[UA_TYPES_VARIABLEATTRIBUTES],
+														NULL,
+														&createdNodeId);
 
-	UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, UA_NODEID_NUMERIC(1, ((temprature_sens_read() - 32) / 1.8)),
-							UA_NODEID_NUMERIC(0, UA_NS0ID_PUBLISHSUBSCRIBE), UA_NODEID_NUMERIC(0, 47), UA_QUALIFIEDNAME(1, "Test"),
-							UA_NODEID_NUMERIC(0, 63), (const UA_NodeAttributes*) &attr, &UA_TYPES[UA_TYPES_VARIABLEATTRIBUTES],
-							NULL,
-							&createdNodeId);
-
-	//UA_NodeId_init(&createdNodeId);
 	parseTemperature(server, createdNodeId);
-	printf("Returned Temperature: %f\n", ((temprature_sens_read() - 32) / 1.8));
-	printf("NodeID: %s\n", (char*) &createdNodeId.identifier.string);
-
 	memset(&dataSetFieldTemp, 0, sizeof(UA_DataSetFieldConfig));
 	dataSetFieldTemp.dataSetFieldType = UA_PUBSUB_DATASETFIELD_VARIABLE;
-	dataSetFieldTemp.field.variable.fieldNameAlias = UA_STRING("CPU Temperature");
+	dataSetFieldTemp.field.variable.fieldNameAlias = UA_STRING("Server localtime");
 	dataSetFieldTemp.field.variable.promotedField = UA_FALSE;
 	dataSetFieldTemp.field.variable.publishParameters.publishedVariable = createdNodeId;
-//createdNodeId;
 	dataSetFieldTemp.field.variable.publishParameters.attributeId = UA_ATTRIBUTEID_VALUE;
-	UA_Server_addDataSetField(server, publishedDataSetIdent, &dataSetFieldTemp, &dataSetFieldIdent); //	/* Add a field to the previous created PublishedDataSet */
+
+	UA_DataSetFieldResult addDataSetFieldStat = UA_Server_addDataSetField(server, publishedDataSetIdent, &dataSetFieldTemp, &dataSetFieldIdent);
+
+
+	//	/* Add a field to the previous created PublishedDataSet */
+	//free(buf);
+	//ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
+
+//	UA_String value = *(UA_String*)createdNodeId.identifier.string.data;
+//	printf("Output string: " UA_PRINTF_STRING_FORMAT "\n", UA_PRINTF_STRING_DATA(value));
+//	printf("\t Output string2: \"%.*s\"",(int)value.length, value.data);
+
 }
 
 /**
@@ -139,7 +137,7 @@ void addDataSetWriter(UA_Server *server)
 
 	esp_base_mac_addr_set(mac);
 	esp_efuse_mac_get_default(mac);
-	printf("ID: %x %x %x %x %x %x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	printf("MAC: %x %x %x %x %x %x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
 	dataSetWriterConfig.dataSetWriterId = (mac[0] + mac[1] + mac[2] + mac[3] + mac[4] + mac[5]);
 	dataSetWriterConfig.keyFrameCount = 10;
@@ -147,20 +145,28 @@ void addDataSetWriter(UA_Server *server)
 	printf("ID: %x\n", dataSetWriterConfig.dataSetWriterId);
 }
 
+void removeNode(UA_Server *server, UA_NodeId nodeId){
+	UA_Server_deleteNode(server, nodeId, true);
+	UA_NodeId_deleteMembers(&nodeId);
+
+}
+
 void parseTemperature(UA_Server *server, const UA_NodeId nodeid)
 {
 	float temp;
 	char *buf = UA_malloc(sizeof(char) * 512);
 	temp = (temprature_sens_read() - 32) / 1.8;
-	printf("Returned Temperature: %.6f\n", temp);
+//	printf("Returned Temperature: %.6f\n", temp);
 	snprintf(buf, 512, "%f", temp);
-	printf("Read Temperature : %s\n", buf);
-	//UA_String temperature = UA_STRING(buf);
+	//printf("Read Temperature : %s\n", buf);
+	UA_String temperature = UA_String_fromChars(buf);
+//	UA_free(&buf);
 
 	//UA_String temperature = UA_STRING("Temperature as string!"); //Change here as read numeric temperature value
 	UA_Variant value;
-	UA_Variant_setScalar(&value, &temp, &UA_TYPES[UA_TYPES_FLOAT]);
+	UA_Variant_setScalar(&value, &temperature, &UA_TYPES[UA_TYPES_STRING]);
 	UA_Server_writeValue(server, nodeid, value);
+
 }
 
 void opcua_task(void *pvParameter)
@@ -178,17 +184,51 @@ void opcua_task(void *pvParameter)
 	}
 
 	config->customHostname = UA_STRING("ESP32");
-	//config->applicationDescription.discoveryUrls = &esp32url;
+	UA_String esp32url = UA_String_fromChars("opc.udp://raspberrypi:4840");
+	config->applicationDescription.discoveryUrls = &esp32url;
 	config->pubsubTransportLayers[0] = UA_PubSubTransportLayerUDPMP();
 	config->pubsubTransportLayersSize++;
 	UA_Server *server = UA_Server_new(config);
+
 	addPubSubConnection(server);
 	addPublishedDataSet(server);
 	addDataSetField(server);
 	addWriterGroup(server);
 	addDataSetWriter(server);
 
-	UA_Server_run(server, &running);
+	//UA_Server_run(server, &running);
+	UA_Server_run_startup(server);
+
+	UA_Boolean waitInternal = false;
+	while (running) {
+		//UA_Server_run(server, &running);
+		UA_UInt16 timeout = UA_Server_run_iterate(server, waitInternal);
+		struct timeval tv;
+		tv.tv_sec = 0;
+		tv.tv_usec = timeout * 10000;
+		select(0, NULL, NULL, NULL, &tv);
+//		parseTemperature(server, createdNodeId);
+//		multi_heap_info_t heapInfo;
+
+//		printf("         %10s %10s %10s %10s %13s %11s %12s\n", "Free", "Allocated", "Largest", "Minimum", "Alloc Blocks", "Free Blocks", "Total Blocks");
+//		heap_caps_get_info(&heapInfo, MALLOC_CAP_EXEC);
+//		printf("EXEC     %10d %10d %10d %10d %13d %11d %12d\n", heapInfo.total_free_bytes, heapInfo.total_allocated_bytes, heapInfo.largest_free_block, heapInfo.minimum_free_bytes, heapInfo.allocated_blocks, heapInfo.free_blocks, heapInfo.total_blocks);
+//		heap_caps_get_info(&heapInfo, MALLOC_CAP_32BIT);
+//		printf("32BIT    %10d %10d %10d %10d %13d %11d %12d\n", heapInfo.total_free_bytes, heapInfo.total_allocated_bytes, heapInfo.largest_free_block, heapInfo.minimum_free_bytes, heapInfo.allocated_blocks, heapInfo.free_blocks, heapInfo.total_blocks);
+//		heap_caps_get_info(&heapInfo, MALLOC_CAP_8BIT);
+//		printf("8BIT     %10d %10d %10d %10d %13d %11d %12d\n", heapInfo.total_free_bytes, heapInfo.total_allocated_bytes, heapInfo.largest_free_block, heapInfo.minimum_free_bytes, heapInfo.allocated_blocks, heapInfo.free_blocks, heapInfo.total_blocks);
+//		heap_caps_get_info(&heapInfo, MALLOC_CAP_DMA);
+//		printf("DMA      %10d %10d %10d %10d %13d %11d %12d\n", heapInfo.total_free_bytes, heapInfo.total_allocated_bytes, heapInfo.largest_free_block, heapInfo.minimum_free_bytes, heapInfo.allocated_blocks, heapInfo.free_blocks, heapInfo.total_blocks);
+//		heap_caps_get_info(&heapInfo, MALLOC_CAP_SPIRAM);
+//		printf("SPISRAM  %10d %10d %10d %10d %13d %11d %12d\n", heapInfo.total_free_bytes, heapInfo.total_allocated_bytes, heapInfo.largest_free_block, heapInfo.minimum_free_bytes, heapInfo.allocated_blocks, heapInfo.free_blocks, heapInfo.total_blocks);
+//		heap_caps_get_info(&heapInfo, MALLOC_CAP_INTERNAL);
+//		printf("INTERNAL %10d %10d %10d %10d %13d %11d %12d\n", heapInfo.total_free_bytes, heapInfo.total_allocated_bytes, heapInfo.largest_free_block, heapInfo.minimum_free_bytes, heapInfo.allocated_blocks, heapInfo.free_blocks, heapInfo.total_blocks);
+//		heap_caps_get_info(&heapInfo, MALLOC_CAP_DEFAULT);
+//		printf("DEFAULT  %10d %10d %10d %10d %13d %11d %12d\n", heapInfo.total_free_bytes, heapInfo.total_allocated_bytes, heapInfo.largest_free_block, heapInfo.minimum_free_bytes, heapInfo.allocated_blocks, heapInfo.free_blocks, heapInfo.total_blocks);
+		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", xPortGetFreeHeapSize());// esp_get_free_heap_size());
+
+//		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
+	}
 
 	ESP_LOGI(TAG, "Now going to stop the server.");
 	UA_Server_delete(server);
@@ -203,14 +243,13 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
-			ESP_ERROR_CHECK(esp_wifi_connect())
-			;
+			ESP_ERROR_CHECK(esp_wifi_connect());
 			break;
 		case SYSTEM_EVENT_STA_GOT_IP:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
 			ESP_LOGI(TAG, "Got IP: %s\n", ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
 			// TODO: Here I create task that start a OPC UA Server
-			xTaskCreate(&opcua_task, "opcua_task", 2048 * 8, NULL, 5, NULL);
+			xTaskCreate(&opcua_task, "opcua_task", 1024 * 8, NULL, 5, NULL);
 			ESP_LOGI(TAG, "RAM left %d", esp_get_free_heap_size());
 			break;
 		case SYSTEM_EVENT_STA_DISCONNECTED:
@@ -232,8 +271,8 @@ void wifi_scan(void)
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	wifi_config_t wifi_config = {
 			.sta = {
-					.ssid = DEFAULT_SSID,
-					.password = DEFAULT_PWD }, };
+					.ssid = CONFIG_DEFAULT_SSID,
+					.password = CONFIG_DEFAULT_PWD }, };
 
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));

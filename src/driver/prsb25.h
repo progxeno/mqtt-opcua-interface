@@ -154,7 +154,7 @@ static esp_err_t spi_master_read_sensor(double *value)
 	}
 
 	/// Mandatory
-	vTaskDelay(xDelay);
+	vTaskDelay(pdMS_TO_TICKS(1));
 
 	/// NOP
 	tx[0] = 0x00;
@@ -172,7 +172,7 @@ static esp_err_t spi_master_read_sensor(double *value)
 	}
 
 	/// Mandatory
-	//vTaskDelay(xDelay);
+	vTaskDelay(pdMS_TO_TICKS(1));
 
 	/// Extract and convert the angle to degrees
 	unsigned int alpha = rx[0] | (rx[1] & 0x3F) << 8;

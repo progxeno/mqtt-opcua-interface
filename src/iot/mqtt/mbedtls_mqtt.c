@@ -19,8 +19,7 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			/* This is a workaround as ESP32 WiFi libs don't currently
 			 auto-reassociate. */
-			ESP_ERROR_CHECK(esp_wifi_connect())
-			;
+			ESP_ERROR_CHECK(esp_wifi_connect());
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			break;
 		default:
@@ -34,8 +33,7 @@ void initialise_wifi(void)
 	tcpip_adapter_init();
 	wifi_event_group = xEventGroupCreate();
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
-	;
+	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
@@ -84,18 +82,14 @@ void mqtt_task(void *pvParameters)
 	ESP_LOGI(TAG, "MQTTClientInit  ...");
 	MQTTClientInit(&client, &network, 2000, mqtt_sendBuf, MQTT_BUF_SIZE, mqtt_readBuf, MQTT_BUF_SIZE);
 
-	MQTTString clientId = MQTTString_initializer
-	;
+	MQTTString clientId = MQTTString_initializer;
 	clientId.cstring = "MBEDTLS_MQTT";
-	MQTTString username = MQTTString_initializer
-	;
+	MQTTString username = MQTTString_initializer;
 	username.cstring = CONFIG_MQTT_USER;
-	MQTTString password = MQTTString_initializer
-	;
+	MQTTString password = MQTTString_initializer;
 	password.cstring = CONFIG_MQTT_PASS;
 
-	MQTTPacket_connectData data = MQTTPacket_connectData_initializer
-	;
+	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
 	data.clientID = clientId;
 	data.willFlag = 0;
 	data.MQTTVersion = 4; // 3 = 3.1 4 = 3.1.1
@@ -145,9 +139,9 @@ void mqtt_task(void *pvParameters)
 				ESP_LOGE(TAG, "I2C Timeout");
 			} else if (ret == ESP_OK) {
 				MQTTPublish(&client, "device/id1/data", &message);
-				printf("Sensordata: %f\n", sensor_data);
+				printf("Sensordata: %i\n", sensor_data);
 			} else if (ret == ESP_ERR_NOT_FOUND) {
-				//ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
+				ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}

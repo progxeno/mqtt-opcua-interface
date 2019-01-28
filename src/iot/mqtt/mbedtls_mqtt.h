@@ -44,7 +44,7 @@ extern "C" {
 #include "cJSON.h"
 #include "MQTTClient.h"
 
-#define PRSB_25
+#define MB_1222
 
 #ifdef PRSB_25
 #include "prsb25.h"
@@ -56,6 +56,7 @@ extern "C" {
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
 
 	uint8_t temprature_sens_read();
+
 	uint8_t mac[6];
 	/* The event group allows multiple bits for each event,
 	 but we only care about one event - are we connected

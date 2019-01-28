@@ -31,7 +31,7 @@ extern "C" {
 #include "cJSON.h"
 #include "mqtt_client.h"
 
-#define PRSB_25
+#define MB_1222
 
 #ifdef PRSB_25
 #include "prsb25.h"

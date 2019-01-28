@@ -29,15 +29,20 @@ extern "C" {
 #include "soc/rtc_cntl_reg.h"
 #include "soc/sens_reg.h"
 
+#include <pthread.h>
+
 #include <time.h>
 #include <unistd.h>
 #include <lwip/sockets.h>
 #include "open62541.h"
 
-#define DEFAULT_SSID "MasterarbeitPi"
-#define DEFAULT_PWD "MasterSMC2018"
-//#define DEFAULT_SSID "smc@iot"
-//#define DEFAULT_PWD "12345678iot"
+#define MB_1222
+
+#ifdef PRSB_25
+#include "prsb25.h"
+#elif defined MB_1222
+#include "mb1222.h"
+#endif
 
 #define TAG "OPCUA_SERVER"
 #define DHT_GPIO 4
@@ -47,6 +52,8 @@ extern "C" {
 	uint8_t temprature_sens_read();
 
 	static UA_Boolean running = true;
+	static UA_Server *server = NULL;
+	UA_NodeId createdNodeId;
 	UA_NodeId connectionIdent, publishedDataSetIdent, writerGroupIdent;
 
 	void addPubSubConnection(UA_Server *server);
@@ -54,6 +61,7 @@ extern "C" {
 	void addDataSetField(UA_Server *server);
 	void addWriterGroup(UA_Server *server);
 	void addDataSetWriter(UA_Server *server);
+	void removeNode(UA_Server *server, UA_NodeId nodeId);
 	void parseTemperature(UA_Server *server, const UA_NodeId nodeid);
 	void opcua_task(void *pvParameter);
 	esp_err_t event_handler(void *ctx, system_event_t *event);

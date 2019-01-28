@@ -7,13 +7,13 @@
 
 #include "opcua_server.h"
 
-void sensor_task(void *pvParameter)
-{
-	//TODO: For now it only reads temperature once in parallel with opcua_task creation. Change this behaviour and make temperature dynamic.
-	//temperature = temprature_sens_read();
-	ESP_LOGI("Sensor_Task", "Temperature read from the sensor: %f", temperature);
-	vTaskDelete(NULL);
-}
+//void sensor_task(void *pvParameter)
+//{
+//	//TODO: For now it only reads temperature once in parallel with opcua_task creation. Change this behaviour and make temperature dynamic.
+//	//temperature = temprature_sens_read();
+//	//ESP_LOGI("Sensor_Task", "Temperature read from the sensor: %f", temperature);
+//	vTaskDelete(NULL);
+//}
 
 void opcua_task(void *pvParameter)
 {
@@ -22,18 +22,20 @@ void opcua_task(void *pvParameter)
 	config = UA_ServerConfig_new_default();
 
 	//Set the connection config
-	UA_ConnectionConfig connectionConfig;
-	connectionConfig.recvBufferSize = 32768;
-	connectionConfig.sendBufferSize = 32768;
+    UA_ConnectionConfig connectionConfig;
+    connectionConfig.recvBufferSize = 16384;
+    connectionConfig.sendBufferSize = 16384;
+    connectionConfig.maxMessageSize = 16384;
+
 
 	UA_ServerNetworkLayer nl = UA_ServerNetworkLayerTCP(connectionConfig, 4840,
 	NULL);
 
 	//Set Discovery URL
-	UA_String esp32url = UA_String_fromChars("opc.tcp://10.0.0.10:4840/");
+	UA_String esp32url = UA_String_fromChars("opc.tcp://10.0.0.100:4840/");
 	config->networkLayers = &nl;
 	config->networkLayersSize = 1;
-	config->networkLayers[0].discoveryUrl = UA_STRING("opc.tcp://espressif:4840");
+	config->networkLayers[0].discoveryUrl = UA_STRING("opc.tcp://esp32:4840");
 
 	config->applicationDescription.discoveryUrls = &esp32url;
 	config->applicationDescription.discoveryUrlsSize = 2;
@@ -41,7 +43,7 @@ void opcua_task(void *pvParameter)
 	config->applicationDescription.applicationName = UA_LOCALIZEDTEXT("en-US", "ESP32Server");
 	config->applicationDescription.applicationType = UA_APPLICATIONTYPE_SERVER;
 	//config->applicationDescription.gatewayServerUri = UA_STRING("192.168.0.1");
-	UA_ServerConfig_set_customHostname(config, UA_STRING("espressif"));
+	UA_ServerConfig_set_customHostname(config, UA_STRING("esp32"));
 	UA_Server *server = UA_Server_new(config);
 
 	addTemperatureNode(server);
@@ -68,12 +70,12 @@ void addTemperatureNode(UA_Server *server)
 {
 	UA_VariableAttributes attr = UA_VariableAttributes_default;
 	//TODO: Temperature value should be read with a cycle and parsed into variable attr value.
-	UA_Int32 ambientTemperature = temperature; //ReadTemperature(4);
-	UA_Variant_setScalar(&attr.value, &ambientTemperature, &UA_TYPES[UA_TYPES_INT32]);
+	UA_Float ambientTemperature = (temprature_sens_read() - 32) / 1.8; //ReadTemperature(4);
+	UA_Variant_setScalar(&attr.value, &ambientTemperature, &UA_TYPES[UA_TYPES_FLOAT]);
 
 	attr.description = UA_LOCALIZEDTEXT("en-US", "Ambient Temperature in C");
 	attr.displayName = UA_LOCALIZEDTEXT("en-US", "Ambient Temperature in C");
-	attr.dataType = UA_TYPES[UA_TYPES_INT32].typeId;
+	attr.dataType = UA_TYPES[UA_TYPES_FLOAT].typeId;
 	attr.accessLevel = UA_ACCESSLEVELMASK_READ;
 
 	UA_NodeId temperatureNodeId = UA_NODEID_STRING(1, "Temperature");
@@ -91,7 +93,8 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
-			ESP_ERROR_CHECK(esp_wifi_connect());
+			ESP_ERROR_CHECK(esp_wifi_connect())
+			;
 			break;
 		case SYSTEM_EVENT_STA_GOT_IP:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
@@ -102,7 +105,8 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
 			break;
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
-			ESP_ERROR_CHECK(esp_wifi_connect());
+			ESP_ERROR_CHECK(esp_wifi_connect())
+			;
 			break;
 		default:
 			break;
@@ -110,22 +114,22 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
 	return ESP_OK;
 }
 
-void wifi_scan(void)
+void wifi_scan2(void)
 {
 	tcpip_adapter_init();
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
+	;
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	wifi_config_t wifi_config = {
 			.sta = {
-					.ssid = DEFAULT_SSID,
-					.password =
-					DEFAULT_PWD }, };
+					.ssid = CONFIG_DEFAULT_SSID,
+					.password = CONFIG_DEFAULT_PWD }, };
 
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
 	ESP_ERROR_CHECK(esp_wifi_start());
-	tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, "espressif");
+	tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, "esp32");
 }
 

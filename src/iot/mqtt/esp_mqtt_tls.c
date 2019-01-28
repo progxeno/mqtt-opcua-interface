@@ -69,7 +69,7 @@ esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 				ESP_LOGE(TAG, "Communication Timeout");
 			} else if (ret == ESP_OK) {
 				esp_mqtt_client_publish(client, "device/id1/data", mqttMsg, 0, 0, 0);
-				printf("Sensordata: %f\n", sensor_data);
+				printf("Sensordata: %i\n", sensor_data);
 			} else {
 				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}

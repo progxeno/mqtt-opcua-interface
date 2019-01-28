@@ -99,8 +99,8 @@ static esp_err_t i2c_master_init()
 static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint16_t *data)
 {
 	int ret;
-	uint8_t *data_h = 0;
-	uint8_t *data_l = 0;
+	uint8_t data_h;
+	uint8_t data_l;
 
 	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 	i2c_master_start(cmd);
@@ -113,39 +113,21 @@ static esp_err_t i2c_master_read_sensor(i2c_port_t i2c_num, uint16_t *data)
 	if (ret != ESP_OK) {
 		return ret;
 	}
-	vTaskDelay(100 / portTICK_RATE_MS);
+	vTaskDelay(pdMS_TO_TICKS(50));
+
 	cmd = i2c_cmd_link_create();
 	i2c_master_start(cmd);
 	i2c_master_write_byte(cmd, MB1222_SENSOR_ADDR << 1 | READ_BIT,
 	ACK_CHECK_EN);
-	i2c_master_read_byte(cmd, data_h, ACK_VAL);
-	i2c_master_read_byte(cmd, data_l, NACK_VAL);
+	i2c_master_read_byte(cmd, &data_h, ACK_VAL);
+	i2c_master_read_byte(cmd, &data_l, NACK_VAL);
 	i2c_master_stop(cmd);
 	ret = i2c_master_cmd_begin(i2c_num, cmd, 10 / portTICK_RATE_MS);
 	i2c_cmd_link_delete(cmd);
 
-	*data = (uint16_t) * data_h << 8 | *data_l;
+	*data = (uint16_t) data_h << 8 | data_l;
 
 	return ret;
 }
-
-//static void i2c_process_task(void *arg)
-//{
-//	int ret;
-//	uint16_t sensor_data;
-//
-//	while (1) {
-//		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
-//
-//		if (ret == ESP_ERR_TIMEOUT) {
-//			ESP_LOGE(TAG, "I2C Timeout");
-//		} else if (ret == ESP_OK) {
-//			printf("\nsensor val: %i [cm]\n", sensor_data);
-//		} else {
-//			ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
-//		}
-//	}
-//	vTaskDelete (NULL);
-//}
 
 #endif /* DRIVER_MB1222_H_ */

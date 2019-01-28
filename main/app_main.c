@@ -16,7 +16,7 @@
 
 #include "esp_log.h"
 
-#define MBED_TLS_MQTT
+#define OPCUA_PUB_SUB
 
 #ifdef ESP_MQTT_TLS
 	#include "esp_mqtt_tls.h"
@@ -61,7 +61,7 @@ void app_main()
 #endif
 
 #ifdef SRC_IOT_OPC_UA_OPCUA_SERVER_H_
-	wifi_scan();
+	wifi_scan2();
 #endif
 
 //		lw_initialise_wifi();
