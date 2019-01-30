@@ -19,9 +19,13 @@ void mqtt_mbedtls_task(void *pvParameters)
 
 	int ret;
 	char* mqttMsg;
-	char macAdr[17];
+	char *macAdr = malloc(sizeof(char) * 13);
 	float temp;
 	cJSON* jsonMsg;
+
+	esp_base_mac_addr_set(mac);
+	esp_efuse_mac_get_default(mac);
+	snprintf(macAdr, 13, "%X%X%X%X%X%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
 	ESP_LOGI(TAG, "Start MQTT Task ...");
 
@@ -35,7 +39,7 @@ void mqtt_mbedtls_task(void *pvParameters)
 	MQTTClientInit(&client, &network, 2000, mqtt_sendBuf, MQTT_BUF_SIZE, mqtt_readBuf, MQTT_BUF_SIZE);
 
 	MQTTString clientId = MQTTString_initializer;
-	clientId.cstring = "MBEDTLS_MQTT";
+	clientId.cstring = macAdr;
 	MQTTString username = MQTTString_initializer;
 	username.cstring = CONFIG_MQTT_USER;
 	MQTTString password = MQTTString_initializer;
@@ -50,16 +54,12 @@ void mqtt_mbedtls_task(void *pvParameters)
 	data.username = username;
 	data.password = password;
 
+	printf("clientID: %s\n", clientId.cstring);
 	ESP_LOGI(TAG, "MQTTConnect  ...");
 	ret = MQTTConnect(&client, &data);
 	if (ret != SUCCESS) {
 		ESP_LOGI(TAG, "MQTTConnect not SUCCESS: %d", ret);
 	}
-
-	esp_base_mac_addr_set(mac);
-	esp_efuse_mac_get_default(mac);
-	sprintf(macAdr, "%x %x %x %x %x %x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-	printf("%x %x %x %x %x %x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
 	while (1) {
 

@@ -20,10 +20,7 @@ extern "C" {
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
-//#include "esp_wifi.h"
 #include "esp_log.h"
-//#include "esp_event_loop.h"
-//#include "nvs_flash.h"
 
 #include "rom/ets_sys.h"
 #include "soc/rtc_cntl_reg.h"
@@ -61,6 +58,7 @@ extern "C" {
 	void addDataSetField(UA_Server *server);
 	void addWriterGroup(UA_Server *server);
 	void addDataSetWriter(UA_Server *server);
+	char* deblank(char* input);
 	void removeNode(UA_Server *server, UA_NodeId nodeId);
 	void parseTemperature(UA_Server *server, const UA_NodeId nodeid);
 

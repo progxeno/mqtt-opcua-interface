@@ -9,6 +9,11 @@
 
 void mqtt_esp_task(void *pvParameters)
 {
+	char *macAdr = malloc(sizeof(char) * 13);
+	esp_base_mac_addr_set(mac);
+	esp_efuse_mac_get_default(mac);
+	snprintf(macAdr, 13, "%X%X%X%X%X%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
 	const esp_mqtt_client_config_t mqtt_cfg = {
 			.host = CONFIG_MQTT_SERVER,
 			.port = CONFIG_MQTT_PORT,
@@ -16,7 +21,8 @@ void mqtt_esp_task(void *pvParameters)
 			.cert_pem = (const char *) ca_pem_start,
 			.username = CONFIG_MQTT_USER,
 			.password = CONFIG_MQTT_PASS,
-			.client_id = "ESP_MQTT", };
+			.client_id = macAdr,};
+	printf("clientID: %s\n", mqtt_cfg.client_id);
 
 	ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
 	esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
@@ -32,16 +38,8 @@ void mqtt_esp_task(void *pvParameters)
 
 	int ret;
 	char* mqttMsg;
-	char *macAdr = malloc(sizeof(uint8_t) * 7);
 	float temp;
 	cJSON* jsonMsg;
-
-	esp_base_mac_addr_set(mac);
-	esp_efuse_mac_get_default(mac);
-	snprintf(macAdr, 7, "%s", mac);
-	for (int i = 0; i < 7; i++) {
-		printf("%i\n", macAdr[i]);
-	}
 
 	while (1) {
 		jsonMsg = cJSON_CreateObject();
@@ -72,4 +70,6 @@ void mqtt_esp_task(void *pvParameters)
 		cJSON_Delete(jsonMsg);
 		free(mqttMsg);
 	}
+	free(macAdr);
+
 }

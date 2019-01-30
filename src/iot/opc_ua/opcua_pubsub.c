@@ -28,6 +28,8 @@ void opcua_pubsub_task(void *pvParameter)
 	config->pubsubTransportLayersSize++;
 	UA_Server *server = UA_Server_new(config);
 
+	esp_base_mac_addr_set(mac);
+	esp_efuse_mac_get_default(mac);
 	addPubSubConnection(server);
 	addPublishedDataSet(server);
 	addDataSetField(server);
@@ -67,9 +69,18 @@ void addPubSubConnection(UA_Server *server)
 			UA_STRING_NULL,
 			UA_STRING("opc.udp://224.0.0.22:4840/") };
 	UA_Variant_setScalar(&connectionConfig.address, &networkAddressUrl, &UA_TYPES[UA_TYPES_NETWORKADDRESSURLDATATYPE]);
-	connectionConfig.publisherId.numeric = UA_UInt32_random();
+
+	char *mac_buf = UA_malloc(sizeof(char) * 13);
+	snprintf(mac_buf, 13, "%X%X%X%X%X%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	UA_String ua_mac = UA_String_fromChars(mac_buf);
+
+	connectionConfig.publisherId.string = ua_mac;
 	UA_StatusCode addPBConnStat = UA_Server_addPubSubConnection(server, &connectionConfig, &connectionIdent);
 	printf("Add PubSub Connection Status Code: %d\n", addPBConnStat);
+
+	printf("PiblisherID: "UA_PRINTF_STRING_FORMAT"\n", UA_PRINTF_STRING_DATA(connectionConfig.publisherId.string));
+	UA_free(mac_buf);
+	UA_String_deleteMembers(&ua_mac);
 }
 
 /**
@@ -172,14 +183,10 @@ void addDataSetWriter(UA_Server *server)
 	memset(&dataSetWriterConfig, 0, sizeof(UA_DataSetWriterConfig));
 	dataSetWriterConfig.name = UA_STRING("Demo DataSetWriter");
 
-	esp_base_mac_addr_set(mac);
-	esp_efuse_mac_get_default(mac);
-	printf("MAC: %x %x %x %x %x %x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-
 	dataSetWriterConfig.dataSetWriterId = (mac[0] + mac[1] + mac[2] + mac[3] + mac[4] + mac[5]);
 	dataSetWriterConfig.keyFrameCount = 10;
 	UA_Server_addDataSetWriter(server, writerGroupIdent, publishedDataSetIdent, &dataSetWriterConfig, &dataSetWriterIdent);
-	printf("ID: %x\n", dataSetWriterConfig.dataSetWriterId);
+	printf("dataSetWriterId: %i\n", dataSetWriterConfig.dataSetWriterId);
 }
 
 void removeNode(UA_Server *server, UA_NodeId nodeId)
@@ -192,9 +199,9 @@ void removeNode(UA_Server *server, UA_NodeId nodeId)
 void parseTemperature(UA_Server *server, const UA_NodeId nodeId)
 {
 	float temp;
-	char *buf = UA_malloc(sizeof(char) * 256);
+	char *buf = UA_malloc(sizeof(char) * 10);
 	temp = (temprature_sens_read() - 32) / 1.8;
-	snprintf(buf, 256, "%f", temp);
+	snprintf(buf, 10, "%f", temp);
 	UA_String temperature = UA_String_fromChars(buf);
 
 	UA_Variant value;

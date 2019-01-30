@@ -16,10 +16,6 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
-//#include "esp_wifi.h"
-//#include "esp_system.h"
-//#include "nvs_flash.h"
-//#include "esp_event_loop.h"
 #include "esp_log.h"
 
 #include "sdkconfig.h"
