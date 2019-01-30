@@ -7,26 +7,16 @@
 
 #include "opcua_server.h"
 
-//void sensor_task(void *pvParameter)
-//{
-//	//TODO: For now it only reads temperature once in parallel with opcua_task creation. Change this behaviour and make temperature dynamic.
-//	//temperature = temprature_sens_read();
-//	//ESP_LOGI("Sensor_Task", "Temperature read from the sensor: %f", temperature);
-//	vTaskDelete(NULL);
-//}
-
-void opcua_task(void *pvParameter)
+void opcua_server_task(void *pvParameter)
 {
 	ESP_LOGI(TAG, "Fire up OPC UA Server.");
-	//config = UA_ServerConfig_new_customBuffer(4840, NULL, 8192, 8192);
 	config = UA_ServerConfig_new_default();
 
 	//Set the connection config
-    UA_ConnectionConfig connectionConfig;
-    connectionConfig.recvBufferSize = 16384;
-    connectionConfig.sendBufferSize = 16384;
-    connectionConfig.maxMessageSize = 16384;
-
+	UA_ConnectionConfig connectionConfig;
+	connectionConfig.recvBufferSize = 16384;
+	connectionConfig.sendBufferSize = 16384;
+	connectionConfig.maxMessageSize = 16384;
 
 	UA_ServerNetworkLayer nl = UA_ServerNetworkLayerTCP(connectionConfig, 4840,
 	NULL);
@@ -86,50 +76,5 @@ void addTemperatureNode(UA_Server *server)
 	UA_Server_addVariableNode(server, temperatureNodeId, parentNodeId, parentReferenceNodeId, temperatureNodeName,
 								UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE), attr, NULL,
 								NULL);
-}
-
-esp_err_t event_handler(void *ctx, system_event_t *event)
-{
-	switch (event->event_id) {
-		case SYSTEM_EVENT_STA_START:
-			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
-			ESP_ERROR_CHECK(esp_wifi_connect())
-			;
-			break;
-		case SYSTEM_EVENT_STA_GOT_IP:
-			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
-			ESP_LOGI(TAG, "Got IP: %s\n", ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
-			// TODO: Here I create task that start a OPC UA Server
-			xTaskCreate(&opcua_task, "opcua_task", 1024 * 8, NULL, 1, NULL);
-			ESP_LOGI(TAG, "RAM left %d", esp_get_free_heap_size());
-			break;
-		case SYSTEM_EVENT_STA_DISCONNECTED:
-			ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
-			ESP_ERROR_CHECK(esp_wifi_connect())
-			;
-			break;
-		default:
-			break;
-	}
-	return ESP_OK;
-}
-
-void wifi_scan2(void)
-{
-	tcpip_adapter_init();
-	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
-	;
-	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	wifi_config_t wifi_config = {
-			.sta = {
-					.ssid = CONFIG_DEFAULT_SSID,
-					.password = CONFIG_DEFAULT_PWD }, };
-
-	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-	ESP_ERROR_CHECK(esp_wifi_start());
-	tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, "esp32");
 }
 

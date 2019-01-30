@@ -6,48 +6,7 @@
  */
 #include "mbedtls_mqtt.h"
 
-esp_err_t event_handler(void *ctx, system_event_t *event)
-{
-	switch (event->event_id) {
-		case SYSTEM_EVENT_STA_START:
-			esp_wifi_connect();
-			break;
-		case SYSTEM_EVENT_STA_GOT_IP:
-			xTaskCreate(&mqtt_task, "mqtt_task", 16384, NULL, 5, NULL);
-			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-			break;
-		case SYSTEM_EVENT_STA_DISCONNECTED:
-			/* This is a workaround as ESP32 WiFi libs don't currently
-			 auto-reassociate. */
-			ESP_ERROR_CHECK(esp_wifi_connect());
-			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
-			break;
-		default:
-			break;
-	}
-	return ESP_OK;
-}
-
-void initialise_wifi(void)
-{
-	tcpip_adapter_init();
-	wifi_event_group = xEventGroupCreate();
-	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-
-	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-	wifi_config_t wifi_config = {
-			.sta = {
-					.ssid = CONFIG_DEFAULT_SSID,
-					.password = CONFIG_DEFAULT_PWD, }, };
-	ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
-	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-	ESP_ERROR_CHECK(esp_wifi_start());
-}
-
-void mqtt_task(void *pvParameters)
+void mqtt_mbedtls_task(void *pvParameters)
 {
 	Network network;
 #ifdef SRC_DRIVER_PRSB25_H_
@@ -63,13 +22,6 @@ void mqtt_task(void *pvParameters)
 	char macAdr[17];
 	float temp;
 	cJSON* jsonMsg;
-
-	/* Wait for the callback to set the CONNECTED_BIT in the
-	 event group.
-	 */
-	xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, false, true,
-	portMAX_DELAY);
-	ESP_LOGI(TAG, "Connected to AP");
 
 	ESP_LOGI(TAG, "Start MQTT Task ...");
 
@@ -135,16 +87,16 @@ void mqtt_task(void *pvParameters)
 		message.payload = (uint16_t *) mqttMsg;
 		message.payloadlen = strlen(mqttMsg) + 1;
 
-			if (ret == ESP_ERR_TIMEOUT) {
-				ESP_LOGE(TAG, "I2C Timeout");
-			} else if (ret == ESP_OK) {
-				MQTTPublish(&client, "device/id1/data", &message);
-				printf("Sensordata: %i\n", sensor_data);
-			} else if (ret == ESP_ERR_NOT_FOUND) {
-				ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
-			} else {
-				ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
-			}
+		if (ret == ESP_ERR_TIMEOUT) {
+			ESP_LOGE(TAG, "I2C Timeout");
+		} else if (ret == ESP_OK) {
+			MQTTPublish(&client, "device/id1/data", &message);
+			printf("Sensor-data: %i\n", sensor_data);
+		} else if (ret == ESP_ERR_NOT_FOUND) {
+			ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
+		} else {
+			ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
+		}
 
 		//ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
 		cJSON_Delete(jsonMsg);

@@ -54,6 +54,7 @@
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/open62541lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/open62541lib/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/components/json/cJSON&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${IDF_PATH}/../../../../usr/include&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.940347507" superClass="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin"/>
 							</tool>

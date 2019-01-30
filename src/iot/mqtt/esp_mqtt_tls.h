@@ -16,10 +16,12 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
-#include "esp_wifi.h"
-#include "esp_system.h"
-#include "nvs_flash.h"
-#include "esp_event_loop.h"
+//#include "esp_wifi.h"
+//#include "esp_system.h"
+//#include "nvs_flash.h"
+//#include "esp_event_loop.h"
+#include "esp_log.h"
+
 #include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
@@ -39,21 +41,14 @@ extern "C" {
 #include "mb1222.h"
 #endif
 
-	/* The event group allows multiple bits for each event,
-	 but we only care about one event - are we connected
-	 to the AP with an IP? */
+#define TAG "ESP_MQTT"
+
 	uint8_t temprature_sens_read();
 	uint8_t mac[6];
-	const static int CONNECTED_BIT = BIT0;
-	EventGroupHandle_t wifi_event_group;
 
 	extern const uint8_t ca_pem_start[] asm("_binary_ca_pem_start");
 	extern const uint8_t ca_pem_end[] asm("_binary_ca_pem_end");
 
-	esp_err_t wifi_event_handler(void *ctx, system_event_t *event);
-	esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event);
-
-	void wifi_init(void);
-	void mqtt_app_start(void);
+	void mqtt_esp_task(void *pvParameters);
 
 #endif /* SRC_IOT_ESP_MQTT_TLS_H_ */

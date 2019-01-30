@@ -20,11 +20,11 @@ extern "C" {
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
-#include "esp_wifi.h"
-#include "esp_event_loop.h"
+//#include "esp_wifi.h"
+//#include "esp_event_loop.h"
 #include "esp_log.h"
-#include "esp_system.h"
-#include "nvs_flash.h"
+//#include "esp_system.h"
+//#include "nvs_flash.h"
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
@@ -52,25 +52,17 @@ extern "C" {
 #include "mb1222.h"
 #endif
 
+#define TAG "MBEDTLS_MQTT"
 #define MQTT_BUF_SIZE 1000
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
 
 	uint8_t temprature_sens_read();
 
 	uint8_t mac[6];
-	/* The event group allows multiple bits for each event,
-	 but we only care about one event - are we connected
-	 to the AP with an IP? */
-	const static int CONNECTED_BIT = BIT0;
 
 	unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
 	unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
 
-	/* FreeRTOS event group to signal when we are connected & ready to make a request */
-	EventGroupHandle_t wifi_event_group;
-
-	esp_err_t event_handler(void *ctx, system_event_t *event);
-	void initialise_wifi(void);
-	void mqtt_task(void *pvParameters);
+	void mqtt_mbedtls_task(void *pvParameters);
 
 #endif /* SRC_IOT_MBEDTLS_MQTT_H_ */

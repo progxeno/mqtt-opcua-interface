@@ -20,10 +20,10 @@ extern "C" {
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
-#include "esp_wifi.h"
+//#include "esp_wifi.h"
 #include "esp_log.h"
-#include "esp_event_loop.h"
-#include "nvs_flash.h"
+//#include "esp_event_loop.h"
+//#include "nvs_flash.h"
 
 #include "rom/ets_sys.h"
 #include "soc/rtc_cntl_reg.h"
@@ -44,8 +44,7 @@ extern "C" {
 #include "mb1222.h"
 #endif
 
-#define TAG "OPCUA_SERVER"
-#define DHT_GPIO 4
+#define TAG "OPCUA_PUB_SUB"
 
 	uint8_t mac[6];
 
@@ -56,6 +55,7 @@ extern "C" {
 	UA_NodeId createdNodeId;
 	UA_NodeId connectionIdent, publishedDataSetIdent, writerGroupIdent;
 
+	void opcua_pubsub_task(void *pvParameter);
 	void addPubSubConnection(UA_Server *server);
 	void addPublishedDataSet(UA_Server *server);
 	void addDataSetField(UA_Server *server);
@@ -63,8 +63,5 @@ extern "C" {
 	void addDataSetWriter(UA_Server *server);
 	void removeNode(UA_Server *server, UA_NodeId nodeId);
 	void parseTemperature(UA_Server *server, const UA_NodeId nodeid);
-	void opcua_task(void *pvParameter);
-	esp_err_t event_handler(void *ctx, system_event_t *event);
-	void wifi_scan(void);
 
 #endif /* SRC_IOT_OPCUA_PUBSUB_H_ */
