@@ -40,7 +40,7 @@ extern "C" {
 #include "cJSON.h"
 #include "MQTTClient.h"
 
-#define MB_1222
+#define PRSB_25
 
 #ifdef PRSB_25
 #include "prsb25.h"

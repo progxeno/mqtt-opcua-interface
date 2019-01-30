@@ -34,7 +34,23 @@ void mqtt_mbedtls_task(void *pvParameters)
 	network.websocket = MQTT_WEBSOCKET;
 
 	ESP_LOGI(TAG, "NetworkConnect %s:%d ...", CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
-	NetworkConnect(&network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+	int retval = NetworkConnect(&network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+
+	if (retval != 0){
+		int i = 1;
+		while (retval != 0 && i <= 5)
+		{
+			i++;
+			ESP_LOGW(TAG, "Connection failed: %i ... Reconnecting", retval);
+			ESP_LOGW(TAG, "Attempt %i", i);
+					retval = NetworkConnect(&network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+
+		}
+		if(retval != 0){
+			ESP_LOGE(TAG, "Failed to Connect to MQTT Broker %s:%d", CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+		}
+	}
+
 	ESP_LOGI(TAG, "MQTTClientInit  ...");
 	MQTTClientInit(&client, &network, 2000, mqtt_sendBuf, MQTT_BUF_SIZE, mqtt_readBuf, MQTT_BUF_SIZE);
 
@@ -91,9 +107,9 @@ void mqtt_mbedtls_task(void *pvParameters)
 			ESP_LOGE(TAG, "I2C Timeout");
 		} else if (ret == ESP_OK) {
 			MQTTPublish(&client, "device/id1/data", &message);
-			printf("Sensor-data: %i\n", sensor_data);
+			printf("Sensor-data: %f\n", sensor_data);
 		} else if (ret == ESP_ERR_NOT_FOUND) {
-			ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
+			//ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
 		} else {
 			ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 		}
