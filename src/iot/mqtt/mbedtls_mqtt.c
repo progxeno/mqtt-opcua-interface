@@ -36,17 +36,15 @@ void mqtt_mbedtls_task(void *pvParameters)
 	ESP_LOGI(TAG, "NetworkConnect %s:%d ...", CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
 	int retval = NetworkConnect(&network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
 
-	if (retval != 0){
+	if (retval != 0) {
 		int i = 1;
-		while (retval != 0 && i <= 5)
-		{
+		while (retval != 0 && i <= 5) {
 			i++;
 			ESP_LOGW(TAG, "Connection failed: %i ... Reconnecting", retval);
 			ESP_LOGW(TAG, "Attempt %i", i);
-					retval = NetworkConnect(&network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
-
+			retval = NetworkConnect(&network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
 		}
-		if(retval != 0){
+		if (retval != 0) {
 			ESP_LOGE(TAG, "Failed to Connect to MQTT Broker %s:%d", CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
 		}
 	}
@@ -80,7 +78,7 @@ void mqtt_mbedtls_task(void *pvParameters)
 	while (1) {
 
 		jsonMsg = cJSON_CreateObject();
-		temp = (temprature_sens_read() - 32) / 1.8;
+		temp = (roundf(((temprature_sens_read() - 32) / 1.8) * 100) * 0.01f);
 
 #ifdef SRC_DRIVER_PRSB25_H_
 		ret = spi_master_read_sensor(&sensor_data);
@@ -88,8 +86,8 @@ void mqtt_mbedtls_task(void *pvParameters)
 		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
 #endif
 
-		cJSON_AddStringToObject(jsonMsg, "mac", macAdr);
-		cJSON_AddNumberToObject(jsonMsg, "value", sensor_data);
+		cJSON_AddStringToObject(jsonMsg, "ID", macAdr);
+		cJSON_AddNumberToObject(jsonMsg, "Value", (roundf(sensor_data*100) * 0.01f));
 		cJSON_AddNumberToObject(jsonMsg, "Temperature", temp);
 
 		mqttMsg = cJSON_Print(jsonMsg);
@@ -107,9 +105,13 @@ void mqtt_mbedtls_task(void *pvParameters)
 			ESP_LOGE(TAG, "I2C Timeout");
 		} else if (ret == ESP_OK) {
 			MQTTPublish(&client, "device/id1/data", &message);
-			printf("Sensor-data: %f\n", sensor_data);
+#ifdef SRC_DRIVER_PRSB25_H_
+			printf("Sensor-data: %f\n", (roundf(sensor_data*100) * 0.01f));
+#elif defined DRIVER_MB1222_H_
+			printf("Sensor-data: %i\n", sensor_data);
+#endif
 		} else if (ret == ESP_ERR_NOT_FOUND) {
-			//ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
+			ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
 		} else {
 			ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 		}

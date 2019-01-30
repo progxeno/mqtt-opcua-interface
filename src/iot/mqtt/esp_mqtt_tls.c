@@ -21,7 +21,7 @@ void mqtt_esp_task(void *pvParameters)
 			.cert_pem = (const char *) ca_pem_start,
 			.username = CONFIG_MQTT_USER,
 			.password = CONFIG_MQTT_PASS,
-			.client_id = macAdr,};
+			.client_id = macAdr, };
 	printf("clientID: %s\n", mqtt_cfg.client_id);
 
 	ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
@@ -61,7 +61,11 @@ void mqtt_esp_task(void *pvParameters)
 			ESP_LOGE(TAG, "Communication Timeout");
 		} else if (ret == ESP_OK) {
 			esp_mqtt_client_publish(client, "device/id1/data", mqttMsg, 0, 0, 0);
+#ifdef SRC_DRIVER_PRSB25_H_
+			printf("Sensordata: %f\n", sensor_data);
+#elif defined DRIVER_MB1222_H_
 			printf("Sensordata: %i\n", sensor_data);
+#endif
 		} else {
 			ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 		}
