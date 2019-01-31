@@ -85,7 +85,7 @@ do
       echo "interface=wlan0
 ssid=$SSID
 hw_mode=g
-channel=3
+channel=1
 ieee80211n=1
 wmm_enabled=0
 ht_capab=[HT40][SHORT-GI-20][DSSS_CCK-40]

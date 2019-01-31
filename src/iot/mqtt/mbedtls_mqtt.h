@@ -61,5 +61,6 @@ extern "C" {
 	unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
 
 	void mqtt_mbedtls_task(void *pvParameters);
-
+	void sendOnlineMsg(MQTTClient client, char *macAdr);
+	MQTTPacket_connectData configureClient(char *macAdr);
 #endif /* SRC_IOT_MBEDTLS_MQTT_H_ */

@@ -46,13 +46,13 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 			break;
 		case SYSTEM_EVENT_STA_GOT_IP:
 #ifdef SRC_IOT_ESP_MQTT_TLS_H_
-			xTaskCreate(&mqtt_esp_task, "mqtt_esp_task", 16384, NULL, 5, NULL);
+			xTaskCreate(&mqtt_esp_task, "mqtt_esp_task", 32768, NULL, 1, NULL);
 #elif defined SRC_IOT_MBEDTLS_MQTT_H_
-			xTaskCreate(&mqtt_mbedtls_task, "mqtt_mbedtls_task", 16384, NULL, 5, NULL);
+			xTaskCreate(&mqtt_mbedtls_task, "mqtt_mbedtls_task", 32768, NULL, 1, NULL);
 #elif defined SRC_IOT_OPCUA_PUBSUB_H_
-			xTaskCreate(&opcua_pubsub_task, "opcua_pubsub_task", 16384, NULL, 5, NULL);
+			xTaskCreate(&opcua_pubsub_task, "opcua_pubsub_task", 32768, NULL, 1, NULL);
 #elif defined SRC_IOT_OPC_UA_OPCUA_SERVER_H_
-			xTaskCreate(&opcua_server_task, "opcua_server_task", 16384, NULL, 5, NULL);
+			xTaskCreate(&opcua_server_task, "opcua_server_task", 32768, NULL, 1, NULL);
 #endif
 			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
 			break;
