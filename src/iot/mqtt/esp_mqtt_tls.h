@@ -46,7 +46,7 @@ extern "C" {
 	extern const uint8_t ca_pem_end[] asm("_binary_ca_pem_end");
 
 	void mqtt_esp_task(void *pvParameters);
-	void sendOnlineMsg(esp_mqtt_client_handle_t client, char *macAdr);
+	int sendOnlineMsg(esp_mqtt_client_handle_t client, char *macAdr);
 	esp_mqtt_client_config_t configureClient(char *macAdr);
 
 #endif /* SRC_IOT_ESP_MQTT_TLS_H_ */

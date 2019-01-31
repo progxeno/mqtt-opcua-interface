@@ -8,7 +8,6 @@
 
 void mqtt_mbedtls_task(void *pvParameters)
 {
-	Network network;
 #ifdef SRC_DRIVER_PRSB25_H_
 	ESP_ERROR_CHECK(spi_master_config());
 	double sensor_data;
@@ -20,8 +19,9 @@ void mqtt_mbedtls_task(void *pvParameters)
 	int ret;
 	char* mqttMsg;
 	char *macAdr = malloc(sizeof(char) * 13);
-	float temp;
+	double temp;
 	cJSON* jsonMsg;
+	Network network;
 
 	esp_base_mac_addr_set(mac);
 	esp_efuse_mac_get_default(mac);
@@ -54,7 +54,6 @@ void mqtt_mbedtls_task(void *pvParameters)
 
 	MQTTPacket_connectData data = configureClient(macAdr);
 
-
 	ESP_LOGI(TAG, "MQTTConnect  ...");
 	ret = MQTTConnect(&client, &data);
 	if (ret != SUCCESS) {
@@ -65,27 +64,21 @@ void mqtt_mbedtls_task(void *pvParameters)
 	while (1) {
 
 		jsonMsg = cJSON_CreateObject();
-		temp = (temprature_sens_read() - 32) / 1.8;
-		char * sendTemp = malloc(sizeof(char) * 5);
-		char * sendSensorData = malloc(sizeof(char) * 5);
+		temp = round(((temprature_sens_read() - 32) / 1.8) * 100.0) / 100.0;
 #ifdef SRC_DRIVER_PRSB25_H_
 		ret = spi_master_read_sensor(&sensor_data);
-		sprintf(sendSensorData, "%.3f", ((signed long)(sensor_data * 1000) * 0.001f));
+		sensor_data = round(sensor_data * 1000.0) / 1000.0;
 #elif defined DRIVER_MB1222_H_
 		ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
-		sprintf(sendSensorData, "%i", sensor_data);
 #endif
-		sprintf(sendTemp, "%.2f", ((signed long)(temp * 100) * 0.01f));
-
 
 		cJSON_AddStringToObject(jsonMsg, "ID", macAdr);
-		cJSON_AddStringToObject(jsonMsg, "Value", sendSensorData);
-		cJSON_AddStringToObject(jsonMsg, "Temperature", sendTemp);
+		cJSON_AddNumberToObject(jsonMsg, "Value", sensor_data);
+		cJSON_AddNumberToObject(jsonMsg, "Temperature", temp);
 
 		mqttMsg = cJSON_Print(jsonMsg);
 
 		MQTTMessage message;
-		//	ESP_LOGI(TAG, "MQTTPublish  ... %s",(uint8_t *) mqttMsg);
 
 		message.qos = QOS0;
 		message.retained = false;
@@ -97,7 +90,12 @@ void mqtt_mbedtls_task(void *pvParameters)
 			ESP_LOGE(TAG, "I2C Timeout");
 		} else if (ret == ESP_OK) {
 			MQTTPublish(&client, "device/id1/data", &message);
-			printf("Sensordata: %s\n", sendSensorData);
+#ifdef SRC_DRIVER_PRSB25_H_
+			printf("Sensordata: %f\n", sensor_data);
+#elif defined DRIVER_MB1222_H_
+			printf("Sensordata: %i\n", sensor_data);
+#endif
+
 		} else if (ret == ESP_ERR_NOT_FOUND) {
 			//ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
 		} else {
@@ -107,68 +105,67 @@ void mqtt_mbedtls_task(void *pvParameters)
 		//ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
 		cJSON_Delete(jsonMsg);
 		free(mqttMsg);
-		free(sendTemp);
-		free(sendSensorData);
 	}
 }
 
-void sendOnlineMsg(MQTTClient client, char *macAdr){
+void sendOnlineMsg(MQTTClient client, char *macAdr)
+{
 
 	cJSON* jsonOnline = cJSON_CreateObject();
-		char* onlineMsg;
-		cJSON_AddStringToObject(jsonOnline, "ID", macAdr);
-		cJSON_AddStringToObject(jsonOnline, "Publisher", "Online");
+	char* onlineMsg;
+	cJSON_AddStringToObject(jsonOnline, "ID", macAdr);
+	cJSON_AddStringToObject(jsonOnline, "Publisher", "Online");
 
-		onlineMsg = cJSON_Print(jsonOnline);
+	onlineMsg = cJSON_Print(jsonOnline);
 
-		MQTTMessage onlineMessage;
-				//	ESP_LOGI(TAG, "MQTTPublish  ... %s",(uint8_t *) mqttMsg);
+	MQTTMessage onlineMessage;
 
-		onlineMessage.qos = QOS0;
-		onlineMessage.retained = false;
-		onlineMessage.dup = false;
-		onlineMessage.payload = (uint16_t *) onlineMsg;
-		onlineMessage.payloadlen = strlen(onlineMsg) + 1;
+	onlineMessage.qos = QOS0;
+	onlineMessage.retained = false;
+	onlineMessage.dup = false;
+	onlineMessage.payload = (uint16_t *) onlineMsg;
+	onlineMessage.payloadlen = strlen(onlineMsg) + 1;
 
-		MQTTPublish(&client, "device/online", &onlineMessage);
-		cJSON_Delete(jsonOnline);
-		free(onlineMsg);
+	MQTTPublish(&client, "device/online", &onlineMessage);
+	cJSON_Delete(jsonOnline);
+	free(onlineMsg);
 
 }
 
-MQTTPacket_connectData configureClient(char *macAdr){
+MQTTPacket_connectData configureClient(char *macAdr)
+{
 	cJSON* jsonLW = cJSON_CreateObject();
-		char* lwMsg;
-		cJSON_AddStringToObject(jsonLW, "ID", macAdr);
-		cJSON_AddStringToObject(jsonLW, "Publisher", "Offline");
+	char* lwMsg;
+	cJSON_AddStringToObject(jsonLW, "ID", macAdr);
+	cJSON_AddStringToObject(jsonLW, "Publisher", "Offline");
 
-		lwMsg = cJSON_Print(jsonLW);
+	lwMsg = cJSON_Print(jsonLW);
 
-		MQTTString clientId = MQTTString_initializer;
-		clientId.cstring = macAdr;
-		MQTTString username = MQTTString_initializer;
-		username.cstring = CONFIG_MQTT_USER;
-		MQTTString password = MQTTString_initializer;
-		password.cstring = CONFIG_MQTT_PASS;
+	MQTTString clientId = MQTTString_initializer;
+	clientId.cstring = macAdr;
+	MQTTString username = MQTTString_initializer;
+	username.cstring = CONFIG_MQTT_USER;
+	MQTTString password = MQTTString_initializer;
+	password.cstring = CONFIG_MQTT_PASS;
 
-		MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-		data.clientID = clientId;
-		data.willFlag = 0;
-		data.MQTTVersion = 4; // 3 = 3.1 4 = 3.1.1
-		data.keepAliveInterval = 60;
-		data.cleansession = 1;
-		data.username = username;
-		data.password = password;
-		data.willFlag = 1;
-		data.will.topicName.cstring = "device/offline";
-		data.will.qos = QOS0;
-		data.will.retained = true;
-		data.will.message.cstring = lwMsg;
+	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+	data.clientID = clientId;
+	data.willFlag = 0;
+	data.MQTTVersion = 4; // 3 = 3.1 4 = 3.1.1
+	data.keepAliveInterval = 60;
+	data.cleansession = 1;
+	data.username = username;
+	data.password = password;
+	data.willFlag = 1;
+	data.will.topicName.cstring = "device/offline";
+	data.will.qos = QOS0;
+	data.will.retained = true;
+	data.will.message.cstring = lwMsg;
 
-		printf("clientID: %s\n", clientId.cstring);
+	printf("clientID: %s\n", clientId.cstring);
 
-		cJSON_Delete(jsonLW);
-		//free(lwMsg);
-		return data;
+	cJSON_Delete(jsonLW);
+	//free(lwMsg);
+	return data;
 
 }
