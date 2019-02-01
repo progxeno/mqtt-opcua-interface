@@ -25,9 +25,7 @@ void mqtt_esp_task(void *pvParameters)
 	int connected;
 	int i = 1;
 
-	esp_base_mac_addr_set(mac);
-	esp_efuse_mac_get_default(mac);
-	snprintf(macAdr, 13, "%X%X%X%X%X%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	setMac(macAdr);
 
 	const esp_mqtt_client_config_t mqtt_cfg = configureClient(macAdr);
 
@@ -85,6 +83,13 @@ void mqtt_esp_task(void *pvParameters)
 	}
 	free(macAdr);
 
+}
+
+void setMac(char *macAdr)
+{
+	esp_base_mac_addr_set(mac);
+	esp_efuse_mac_get_default(mac);
+	snprintf(macAdr, 13, "%X%X%X%X%X%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
 int sendOnlineMsg(esp_mqtt_client_handle_t client, char *macAdr)

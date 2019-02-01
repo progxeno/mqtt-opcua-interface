@@ -22,43 +22,17 @@ void mqtt_mbedtls_task(void *pvParameters)
 	double temp;
 	cJSON* jsonMsg;
 	Network network;
+	MQTTClient client;
+	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
 
-	esp_base_mac_addr_set(mac);
-	esp_efuse_mac_get_default(mac);
-	snprintf(macAdr, 13, "%X%X%X%X%X%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-
+	setMac(macAdr);
 	ESP_LOGI(TAG, "Start MQTT Task ...");
 
-	MQTTClient client;
 	NetworkInit(&network);
 	network.websocket = MQTT_WEBSOCKET;
 
-	ESP_LOGI(TAG, "NetworkConnect %s:%d ...", CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
-	int retval = NetworkConnect(&network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
-
-	if (retval != 0) {
-		int i = 1;
-		while (retval != 0 && i <= 5) {
-			i++;
-			ESP_LOGW(TAG, "Connection failed: %i ... Reconnecting", retval);
-			ESP_LOGW(TAG, "Attempt %i", i);
-			retval = NetworkConnect(&network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
-		}
-		if (retval != 0) {
-			ESP_LOGE(TAG, "Failed to Connect to MQTT Broker %s:%d", CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
-		}
-	}
-
-	ESP_LOGI(TAG, "MQTTClientInit  ...");
-	MQTTClientInit(&client, &network, 2000, mqtt_sendBuf, MQTT_BUF_SIZE, mqtt_readBuf, MQTT_BUF_SIZE);
-
-	MQTTPacket_connectData data = configureClient(macAdr);
-
-	ESP_LOGI(TAG, "MQTTConnect  ...");
-	ret = MQTTConnect(&client, &data);
-	if (ret != SUCCESS) {
-		ESP_LOGI(TAG, "MQTTConnect not SUCCESS: %d", ret);
-	}
+	configureClient(&data, macAdr);
+	startClient(&client, &network, &data);
 	sendOnlineMsg(client, macAdr);
 
 	while (1) {
@@ -91,7 +65,7 @@ void mqtt_mbedtls_task(void *pvParameters)
 		} else if (ret == ESP_OK) {
 			MQTTPublish(&client, "device/id1/data", &message);
 #ifdef SRC_DRIVER_PRSB25_H_
-			printf("Sensordata: %f\n", sensor_data);
+			printf("Sensordata: %.3f\n", sensor_data);
 #elif defined DRIVER_MB1222_H_
 			printf("Sensordata: %i\n", sensor_data);
 #endif
@@ -106,6 +80,42 @@ void mqtt_mbedtls_task(void *pvParameters)
 		cJSON_Delete(jsonMsg);
 		free(mqttMsg);
 	}
+}
+
+void startClient(MQTTClient *client, Network *network, MQTTPacket_connectData *data)
+{
+	int ret;
+	ESP_LOGI(TAG, "NetworkConnect %s:%d ...", CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+	int retval = NetworkConnect(network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+
+	if (retval != 0) {
+		int i = 1;
+		while (retval != 0 && i <= 5) {
+			i++;
+			ESP_LOGW(TAG, "Connection failed: %i ... Reconnecting", retval);
+			ESP_LOGW(TAG, "Attempt %i", i);
+			retval = NetworkConnect(network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+		}
+		if (retval != 0) {
+			ESP_LOGE(TAG, "Failed to Connect to MQTT Broker %s:%d", CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+		}
+	}
+
+	ESP_LOGI(TAG, "MQTTClientInit  ...");
+	MQTTClientInit(client, network, 2000, mqtt_sendBuf, MQTT_BUF_SIZE, mqtt_readBuf, MQTT_BUF_SIZE);
+
+	ESP_LOGI(TAG, "MQTTConnect  ...");
+	ret = MQTTConnect(client, data);
+	if (ret != SUCCESS) {
+		ESP_LOGI(TAG, "MQTTConnect not SUCCESS: %d", ret);
+	}
+}
+
+void setMac(char *macAdr)
+{
+	esp_base_mac_addr_set(mac);
+	esp_efuse_mac_get_default(mac);
+	snprintf(macAdr, 13, "%X%X%X%X%X%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
 void sendOnlineMsg(MQTTClient client, char *macAdr)
@@ -132,7 +142,7 @@ void sendOnlineMsg(MQTTClient client, char *macAdr)
 
 }
 
-MQTTPacket_connectData configureClient(char *macAdr)
+void configureClient(MQTTPacket_connectData *data, char *macAdr)
 {
 	cJSON* jsonLW = cJSON_CreateObject();
 	char* lwMsg;
@@ -141,31 +151,31 @@ MQTTPacket_connectData configureClient(char *macAdr)
 
 	lwMsg = cJSON_Print(jsonLW);
 
-	MQTTString clientId = MQTTString_initializer;
+	MQTTString clientId = MQTTString_initializer
+	;
 	clientId.cstring = macAdr;
-	MQTTString username = MQTTString_initializer;
+	MQTTString username = MQTTString_initializer
+	;
 	username.cstring = CONFIG_MQTT_USER;
-	MQTTString password = MQTTString_initializer;
+	MQTTString password = MQTTString_initializer
+	;
 	password.cstring = CONFIG_MQTT_PASS;
 
-	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-	data.clientID = clientId;
-	data.willFlag = 0;
-	data.MQTTVersion = 4; // 3 = 3.1 4 = 3.1.1
-	data.keepAliveInterval = 60;
-	data.cleansession = 1;
-	data.username = username;
-	data.password = password;
-	data.willFlag = 1;
-	data.will.topicName.cstring = "device/offline";
-	data.will.qos = QOS0;
-	data.will.retained = true;
-	data.will.message.cstring = lwMsg;
+	data->clientID = clientId;
+	data->willFlag = 0;
+	data->MQTTVersion = 4; // 3 = 3.1 4 = 3.1.1
+	data->keepAliveInterval = 60;
+	data->cleansession = 1;
+	data->username = username;
+	data->password = password;
+	data->willFlag = 1;
+	data->will.topicName.cstring = "device/offline";
+	data->will.qos = QOS0;
+	data->will.retained = true;
+	data->will.message.cstring = lwMsg;
 
 	printf("clientID: %s\n", clientId.cstring);
 
 	cJSON_Delete(jsonLW);
-	//free(lwMsg);
-	return data;
 
 }

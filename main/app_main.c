@@ -17,7 +17,7 @@
 
 #include "esp_log.h"
 
-#define MBED_TLS_MQTT
+#define ESP_MQTT_TLS
 
 #ifdef ESP_MQTT_TLS
 #include "esp_mqtt_tls.h"
@@ -60,7 +60,6 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 			/* This is a workaround as ESP32 WiFi libs don't currently
 			 auto-reassociate. */
 			ESP_ERROR_CHECK(esp_wifi_connect())
-			;
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			break;
 		default:
@@ -76,7 +75,7 @@ static void wifi_init(void)
 	wifi_event_group = xEventGroupCreate();
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
-	;
+
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 	wifi_config_t wifi_config = {
