@@ -7,15 +7,16 @@
 
 #include "prsb25.h"
 
-uint8_t compute_crc(uint8_t *byte, size_t size) {
-    uint8_t  crc = 0xFF;
+uint8_t compute_crc(uint8_t *byte, size_t size)
+{
+	uint8_t crc = 0xFF;
 
-    for (size_t i = 0; i < size; ++i) {
-        crc = crc_array[crc ^ byte[i]];
-    }
-    crc = ~crc;
+	for (size_t i = 0; i < size; ++i) {
+		crc = crc_array[crc ^ byte[i]];
+	}
+	crc = ~crc;
 
-    return crc;
+	return crc;
 }
 /// Initialize the SPI2 device in master mode
 esp_err_t spi_master_config(void)
@@ -84,8 +85,9 @@ esp_err_t spi_master_read_sensor(double *value)
 	}
 
 	/// Mandatory
-	vTaskDelay(pdMS_TO_TICKS(1));
-
+	//WORKAROUND: vTaskDelay(pdMS_TO_TICKS(1)); not accurate
+	//usleep(1000);
+	vTaskDelay(pdMS_TO_TICKS(2));
 	/// NOP
 	tx[0] = 0x00;
 	tx[1] = 0x00;
@@ -102,7 +104,8 @@ esp_err_t spi_master_read_sensor(double *value)
 	}
 
 	/// Mandatory
-	vTaskDelay(pdMS_TO_TICKS(1));
+	//WORKAROUND: vTaskDelay(pdMS_TO_TICKS(1)); not accurate
+	//usleep(100);
 
 	/// Extract and convert the angle to degrees
 	unsigned int alpha = rx[0] | (rx[1] & 0x3F) << 8;
@@ -120,16 +123,17 @@ esp_err_t spi_master_read_sensor(double *value)
 //    ESP_LOGI(TAG, "crc %d\talpha %d\tcount %2d\n", crc, alpha, counter);
 //    ESP_LOGI(TAG, "error %d\tphase %2.5f\n", error, phase);
 
-	 if (crc == compute_crc(rx, sizeof(rx)-1)) {
-	        if (error > 1) {
-	            phase = (double)alpha * factor;
-	            *value = phase;
-	        } else {
-	        	ret = ESP_ERR_NOT_FOUND;
-	        }
-	    } else {
-	    	ret = ESP_ERR_NOT_FOUND;
-	    }
+	if (crc == compute_crc(rx, sizeof(rx) - 1)) {
+		if (error > 1) {
+			phase = (double) alpha * factor;
+			*value = phase;
+		} else {
+			ret = ESP_ERR_NOT_FOUND;
+		}
+	} else {
+		//printf("0");
+		ret = ESP_ERR_NOT_FOUND;
+	}
 
 	return ret;
 }

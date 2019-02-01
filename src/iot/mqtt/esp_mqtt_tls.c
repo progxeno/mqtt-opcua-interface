@@ -36,7 +36,9 @@ void mqtt_esp_task(void *pvParameters)
 	printf("error: %s\n", esp_err_to_name(retval));
 
 	connected = sendOnlineMsg(client, macAdr);
-	while (1) {
+	int count = 0;
+	int loop = 0;
+	while (loop<=1000) {
 
 		if (connected != 0) {
 			i++;
@@ -45,6 +47,7 @@ void mqtt_esp_task(void *pvParameters)
 			sleep(1);
 
 		} else {
+			loop++;
 			jsonMsg = cJSON_CreateObject();
 			temp = round(((temprature_sens_read() - 32) / 1.8) * 100.0) / 100.0;
 
@@ -72,6 +75,9 @@ void mqtt_esp_task(void *pvParameters)
 				printf("Sensordata: %i\n", sensor_data);
 #endif
 
+			} else if (ret == ESP_ERR_NOT_FOUND) {
+				count++;
+				//ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
 			} else {
 				//ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
 			}
@@ -81,6 +87,8 @@ void mqtt_esp_task(void *pvParameters)
 			free(mqttMsg);
 		}
 	}
+	printf("%i\n", count);
+
 	free(macAdr);
 
 }
