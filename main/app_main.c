@@ -16,13 +16,15 @@
 #include "freertos/event_groups.h"
 
 #include "esp_log.h"
+//#include "global.h"
 
-#define ESP_MQTT_TLS
+#define MBED_TLS_MQTT
 
 #ifdef ESP_MQTT_TLS
 #include "esp_mqtt_tls.h"
 #elif defined MBED_TLS_MQTT
 #include "mbedtls_mqtt.h"
+#include "opcua_pubsub.h"
 #elif defined OPCUA_PUB_SUB
 #include "opcua_pubsub.h"
 #elif defined OPCUA_SERVER
@@ -38,6 +40,11 @@ const static int CONNECTED_BIT = BIT0;
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t wifi_event_group;
 
+/* Taskhandler for two parallel Tasks */
+TaskHandle_t TaskMQTT;
+TaskHandle_t TaskOPCUA;
+SemaphoreHandle_t xSemaphore = NULL;
+
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
 	switch (event->event_id) {
@@ -45,10 +52,19 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 			esp_wifi_connect();
 			break;
 		case SYSTEM_EVENT_STA_GOT_IP:
+			/* Create the semaphore to guard a shared resource.  As we are using
+			 the semaphore for mutual exclusion we create a mutex semaphore
+			 rather than a binary semaphore. */
+//			vSemaphoreCreateBinary( xSemaphore );
+			xSemaphore = xSemaphoreCreateMutex();
 #ifdef SRC_IOT_ESP_MQTT_TLS_H_
 			xTaskCreate(&mqtt_esp_task, "mqtt_esp_task", 32768, NULL, 1, NULL);
 #elif defined SRC_IOT_MBEDTLS_MQTT_H_
-			xTaskCreate(&mqtt_mbedtls_task, "mqtt_mbedtls_task", 32768, NULL, 1, NULL);
+			//https://www.esp32.com/viewtopic.php?t=764
+			xTaskCreatePinnedToCore(mqtt_mbedtls_task, "mqtt_mbedtls_task", 16384, NULL, 2, &TaskMQTT, 1);
+			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 16384, NULL, 3, &TaskOPCUA, 0);
+//			xTaskCreate(mqtt_mbedtls_task, "mqtt_mbedtls_task", 16384, NULL, 2, &TaskMQTT);
+//			xTaskCreate(opcua_pubsub_task, "opcua_pubsub_task", 16384, NULL, 3, &TaskOPCUA);
 #elif defined SRC_IOT_OPCUA_PUBSUB_H_
 			xTaskCreate(&opcua_pubsub_task, "opcua_pubsub_task", 32768, NULL, 1, NULL);
 #elif defined SRC_IOT_OPC_UA_OPCUA_SERVER_H_
@@ -70,7 +86,6 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 
 static void wifi_init(void)
 {
-	printf("TestespMqtt-Wifi");
 	tcpip_adapter_init();
 	wifi_event_group = xEventGroupCreate();
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));

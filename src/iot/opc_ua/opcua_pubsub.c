@@ -9,51 +9,83 @@
 
 void opcua_pubsub_task(void *pvParameter)
 {
-	UA_ServerConfig *config;
-	ESP_LOGI(TAG, "Fire up OPC UA Server.");
-	config = UA_ServerConfig_new_customBuffer(4840, NULL, 8192, 8192);
-	//config = UA_ServerConfig_new_default();
 
-	/* Details about the connection configuration and handling are located in the pubsub connection tutorial */
-	config->pubsubTransportLayers = (UA_PubSubTransportLayer *) UA_malloc(sizeof(UA_PubSubTransportLayer));
-	if (!config->pubsubTransportLayers) {
-		UA_ServerConfig_delete(config);
-		return;
+	printf("OPC UA running on Core: %i\n", xPortGetCoreID());
+	while (1) {
+		if (xSemaphore != NULL) {
+			/* See if we can obtain the semaphore.  If the semaphore is not
+			 available wait 10 ticks to see if it becomes free. */
+			if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
+				vTaskDelay( 10 / portTICK_RATE_MS );
+
+				UA_ServerConfig *config;
+				ESP_LOGI(TAG, "Fire up OPC UA Server.");
+				config = UA_ServerConfig_new_customBuffer(4840, NULL, 8192, 8192);
+//				config = UA_ServerConfig_new_default();
+				vTaskDelay(pdMS_TO_TICKS(1000));
+
+				/* Details about the connection configuration and handling are located in the pubsub connection tutorial */
+				config->pubsubTransportLayers = (UA_PubSubTransportLayer *) UA_malloc(sizeof(UA_PubSubTransportLayer));
+				if (!config->pubsubTransportLayers) {
+					UA_ServerConfig_delete(config);
+					return;
+				}
+
+				config->customHostname = UA_STRING("ESP32");
+				UA_String esp32url = UA_String_fromChars("opc.udp://raspberrypi:4840");
+				config->applicationDescription.discoveryUrls = &esp32url;
+				config->pubsubTransportLayers[0] = UA_PubSubTransportLayerUDPMP();
+				config->pubsubTransportLayersSize++;
+				UA_Server *server = UA_Server_new(config);
+
+				esp_base_mac_addr_set(mac);
+				esp_efuse_mac_get_default(mac);
+				addPubSubConnection(server);
+				addPublishedDataSet(server);
+				addDataSetField(server);
+				addWriterGroup(server);
+				addDataSetWriter(server);
+
+				UA_Server_run_startup(server);
+
+				UA_Boolean waitInternal = false;
+				xSemaphoreGive(xSemaphore);
+				while (running) {
+
+					if (xSemaphore != NULL) {
+						/* See if we can obtain the semaphore.  If the semaphore is not
+						 available wait 10 ticks to see if it becomes free. */
+						if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 0 ) == pdTRUE) {
+							vTaskDelay( 10 / portTICK_RATE_MS );
+
+							//	ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", xPortGetFreeHeapSize());	// esp_get_free_heap_size());
+							UA_UInt16 timeout = UA_Server_run_iterate(server, waitInternal);
+							struct timeval tv;
+							tv.tv_sec = 0;
+							tv.tv_usec = timeout * 1000;
+							select(0, NULL, NULL, NULL, &tv);
+							parseTemperature(server, createdNodeId);
+							xSemaphoreGive(xSemaphore);
+						} else {
+							continue;
+						}
+					} else {
+						continue;
+					}
+				}
+
+				ESP_LOGI(TAG, "Now going to stop the server.");
+				UA_Server_delete(server);
+				UA_ServerConfig_delete(config);
+				ESP_LOGI(TAG, "opcua_task going to return");
+				vTaskDelete(NULL);
+			} else {
+				continue;
+			}
+		} else {
+			continue;
+		}
 	}
-
-	config->customHostname = UA_STRING("ESP32");
-	UA_String esp32url = UA_String_fromChars("opc.udp://raspberrypi:4840");
-	config->applicationDescription.discoveryUrls = &esp32url;
-	config->pubsubTransportLayers[0] = UA_PubSubTransportLayerUDPMP();
-	config->pubsubTransportLayersSize++;
-	UA_Server *server = UA_Server_new(config);
-
-	esp_base_mac_addr_set(mac);
-	esp_efuse_mac_get_default(mac);
-	addPubSubConnection(server);
-	addPublishedDataSet(server);
-	addDataSetField(server);
-	addWriterGroup(server);
-	addDataSetWriter(server);
-
-	UA_Server_run_startup(server);
-
-	UA_Boolean waitInternal = false;
-	while (running) {
-		//	ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", xPortGetFreeHeapSize());	// esp_get_free_heap_size());
-		UA_UInt16 timeout = UA_Server_run_iterate(server, waitInternal);
-		struct timeval tv;
-		tv.tv_sec = 0;
-		tv.tv_usec = timeout * 1000;
-		select(0, NULL, NULL, NULL, &tv);
-		parseTemperature(server, createdNodeId);
-	}
-
-	ESP_LOGI(TAG, "Now going to stop the server.");
-	UA_Server_delete(server);
-	UA_ServerConfig_delete(config);
-	ESP_LOGI(TAG, "opcua_task going to return");
-	vTaskDelete(NULL);
 }
 
 void addPubSubConnection(UA_Server *server)

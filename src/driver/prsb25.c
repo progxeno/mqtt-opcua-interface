@@ -29,14 +29,15 @@ esp_err_t spi_master_config(void)
 			.sclk_io_num = PIN_NUM_CLK,
 			.quadwp_io_num = -1,
 			.quadhd_io_num = -1,
-			.max_transfer_sz = SPI_MAX_DMA_LEN, };
+			.max_transfer_sz = SPI_MAX_DMA_LEN,};
 
 	/// Configuration for the SPI master interface
 	spi_device_interface_config_t devcfg = {
 			.clock_speed_hz = 500000,
 			.mode = SPI_MODE,
 			.spics_io_num = PIN_NUM_SS,
-			.queue_size = 1,
+			.queue_size = 7,
+			.duty_cycle_pos=128,
 //			.pre_cb = NULL,
 //			.post_cb = NULL,
 			};
@@ -56,8 +57,6 @@ esp_err_t spi_master_read_sensor(double *value)
 	int ret = -1;
 	double phase = 0.0;
 	const double factor = 360.0 / 16383.0;
-	/// Block for 1ms.
-	const TickType_t xDelay = 1 / portTICK_PERIOD_MS;
 
 	/// Prepare transaction parameter
 	uint8_t tx[] = {
@@ -78,6 +77,7 @@ esp_err_t spi_master_read_sensor(double *value)
 	trans.rxlength = 8 * 8;
 	trans.tx_buffer = &tx;
 	trans.rx_buffer = &rx;
+	trans.user=(void*)1;
 
 	ret = spi_device_transmit(spi_handle, &trans);
 	if (ESP_OK != ret) {
@@ -85,9 +85,8 @@ esp_err_t spi_master_read_sensor(double *value)
 	}
 
 	/// Mandatory
-	//WORKAROUND: vTaskDelay(pdMS_TO_TICKS(1)); not accurate
-	//usleep(1000);
 	vTaskDelay(pdMS_TO_TICKS(2));
+
 	/// NOP
 	tx[0] = 0x00;
 	tx[1] = 0x00;
@@ -104,8 +103,7 @@ esp_err_t spi_master_read_sensor(double *value)
 	}
 
 	/// Mandatory
-	//WORKAROUND: vTaskDelay(pdMS_TO_TICKS(1)); not accurate
-	//usleep(100);
+//	vTaskDelay(pdMS_TO_TICKS(1));
 
 	/// Extract and convert the angle to degrees
 	unsigned int alpha = rx[0] | (rx[1] & 0x3F) << 8;
@@ -117,8 +115,6 @@ esp_err_t spi_master_read_sensor(double *value)
 	uint8_t counter = rx[6] & 0x3F;
 	/// Extract the CRC
 	uint8_t crc = rx[7];
-
-	//vTaskDelay(500 / portTICK_PERIOD_MS);
 
 //    ESP_LOGI(TAG, "crc %d\talpha %d\tcount %2d\n", crc, alpha, counter);
 //    ESP_LOGI(TAG, "error %d\tphase %2.5f\n", error, phase);
@@ -134,6 +130,7 @@ esp_err_t spi_master_read_sensor(double *value)
 		//printf("0");
 		ret = ESP_ERR_NOT_FOUND;
 	}
+//	vTaskDelay(pdMS_TO_TICKS(0.5));
 
 	return ret;
 }

@@ -40,6 +40,7 @@ extern "C" {
 
 #include "cJSON.h"
 #include "MQTTClient.h"
+//#include "global.h"
 
 #define PRSB_25
 
@@ -50,7 +51,7 @@ extern "C" {
 #endif
 
 #define TAG "MBEDTLS_MQTT"
-#define MQTT_BUF_SIZE 1000
+#define MQTT_BUF_SIZE 2048
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
 
 	uint8_t temprature_sens_read();
@@ -59,6 +60,7 @@ extern "C" {
 
 	unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
 	unsigned char mqtt_readBuf[MQTT_BUF_SIZE];
+	extern SemaphoreHandle_t xSemaphore;
 
 	void startClient(MQTTClient *client, Network *network, MQTTPacket_connectData *data);
 	void setMac(char *macAdr);

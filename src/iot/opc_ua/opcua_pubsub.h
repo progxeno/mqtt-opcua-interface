@@ -32,6 +32,7 @@ extern "C" {
 #include <unistd.h>
 #include <lwip/sockets.h>
 #include "open62541.h"
+//#include "global.h"
 
 #define MB_1222
 
@@ -51,6 +52,7 @@ extern "C" {
 	static UA_Server *server = NULL;
 	UA_NodeId createdNodeId;
 	UA_NodeId connectionIdent, publishedDataSetIdent, writerGroupIdent;
+	extern SemaphoreHandle_t xSemaphore;
 
 	void opcua_pubsub_task(void *pvParameter);
 	void addPubSubConnection(UA_Server *server);

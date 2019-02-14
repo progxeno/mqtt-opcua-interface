@@ -44,6 +44,7 @@ extern "C" {
 
 	extern const uint8_t ca_pem_start[] asm("_binary_ca_pem_start");
 	extern const uint8_t ca_pem_end[] asm("_binary_ca_pem_end");
+	extern SemaphoreHandle_t xSemaphore;
 
 	void mqtt_esp_task(void *pvParameters);
 	void setMac(char *macAdr);

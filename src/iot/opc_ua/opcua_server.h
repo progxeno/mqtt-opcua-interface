@@ -33,7 +33,8 @@ extern "C" {
 
 	UA_ServerConfig *config;
 	uint8_t temprature_sens_read();
-	static UA_Boolean running = true;
+//	static UA_Boolean running = true;
+	extern SemaphoreHandle_t xSemaphore;
 
 	void opcua_server_task(void *pvParameter);
 	void addTemperatureNode(UA_Server *server);

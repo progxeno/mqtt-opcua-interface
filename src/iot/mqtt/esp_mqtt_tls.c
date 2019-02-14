@@ -9,88 +9,98 @@
 
 void mqtt_esp_task(void *pvParameters)
 {
+	while (1) {
+		if (xSemaphore != NULL) {
 #ifdef SRC_DRIVER_PRSB25_H_
-	ESP_ERROR_CHECK(spi_master_config());
-	double sensor_data;
+			ESP_ERROR_CHECK(spi_master_config());
+			double sensor_data;
 #elif defined DRIVER_MB1222_H_
-	ESP_ERROR_CHECK(i2c_master_init());
-	uint16_t sensor_data;
+			ESP_ERROR_CHECK(i2c_master_init());
+			uint16_t sensor_data;
 #endif
 
-	int ret;
-	char* mqttMsg;
-	char *macAdr = malloc(sizeof(char) * 13);
-	double temp;
-	cJSON* jsonMsg;
-	int connected;
-	int i = 1;
+			int ret;
+			char* mqttMsg;
+			char *macAdr = malloc(sizeof(char) * 13);
+			double temp;
+			cJSON* jsonMsg;
+			int connected;
+			int i = 1;
 
-	setMac(macAdr);
+			setMac(macAdr);
 
-	const esp_mqtt_client_config_t mqtt_cfg = configureClient(macAdr);
+			const esp_mqtt_client_config_t mqtt_cfg = configureClient(macAdr);
 
-	ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
-	esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
-	esp_err_t retval = esp_mqtt_client_start(client);
+			ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
+			esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
+			esp_err_t retval = esp_mqtt_client_start(client);
 
-	printf("error: %s\n", esp_err_to_name(retval));
+			printf("error: %s\n", esp_err_to_name(retval));
 
-	connected = sendOnlineMsg(client, macAdr);
-	int count = 0;
-	int loop = 0;
-	while (loop<=1000) {
-
-		if (connected != 0) {
-			i++;
-			ESP_LOGW(TAG, "Attempt %i", i);
+			xSemaphoreGive(xSemaphore);
 			connected = sendOnlineMsg(client, macAdr);
-			sleep(1);
-
-		} else {
-			loop++;
-			jsonMsg = cJSON_CreateObject();
-			temp = round(((temprature_sens_read() - 32) / 1.8) * 100.0) / 100.0;
+			int count = 0;
+			int loop = 1;
+			while (loop <= 1000000) {
+				if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
+					if (connected != 0) {
+						i++;
+						ESP_LOGW(TAG, "Attempt %i", i);
+						// ESP_LOGI(TAG, "Stack remaining for task '%s' is %d bytes", pcTaskGetTaskName(NULL), uxTaskGetStackHighWaterMark(NULL));
+						connected = sendOnlineMsg(client, macAdr);
+						vTaskDelay(pdMS_TO_TICKS(1000));
+						continue;
+					}
+					loop++;
+					jsonMsg = cJSON_CreateObject();
+					temp = round(((temprature_sens_read() - 32) / 1.8) * 100.0) / 100.0;
 
 #ifdef SRC_DRIVER_PRSB25_H_
-			ret = spi_master_read_sensor(&sensor_data);
-			sensor_data = round(sensor_data * 1000.0) / 1000.0;
+					ret = spi_master_read_sensor(&sensor_data);
+					sensor_data = round(sensor_data * 1000.0) / 1000.0;
 #elif defined DRIVER_MB1222_H_
-			ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
+					ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
 #endif
 
-			cJSON_AddStringToObject(jsonMsg, "ID", macAdr);
-			cJSON_AddNumberToObject(jsonMsg, "Value", sensor_data);
-			cJSON_AddNumberToObject(jsonMsg, "Temperature", temp);
+					cJSON_AddStringToObject(jsonMsg, "ID", macAdr);
+					cJSON_AddNumberToObject(jsonMsg, "Value", sensor_data);
+					cJSON_AddNumberToObject(jsonMsg, "Temperature", temp);
 
-			mqttMsg = cJSON_Print(jsonMsg);
+					mqttMsg = cJSON_Print(jsonMsg);
 
-			if (ret == ESP_ERR_TIMEOUT) {
-				ESP_LOGE(TAG, "Communication Timeout");
-			} else if (ret == ESP_OK) {
+					if (ret == ESP_ERR_TIMEOUT) {
+						ESP_LOGE(TAG, "Communication Timeout");
+					} else if (ret == ESP_OK) {
 
-				connected = esp_mqtt_client_publish(client, "device/id1/data", mqttMsg, 0, 0, 0);
+						connected = esp_mqtt_client_publish(client, "device/id1/data", mqttMsg, 0, 0, 0);
 #ifdef SRC_DRIVER_PRSB25_H_
-				printf("Sensordata: %.3f\n", sensor_data);
+						printf("Sensordata: %.3f \t %i\n", sensor_data, loop);
 #elif defined DRIVER_MB1222_H_
-				printf("Sensordata: %i\n", sensor_data);
+						printf("Sensordata: %i\n", sensor_data);
 #endif
 
-			} else if (ret == ESP_ERR_NOT_FOUND) {
-				count++;
-				//ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
-			} else {
-				//ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
+					} else if (ret == ESP_ERR_NOT_FOUND) {
+						count++;
+						//ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
+					} else {
+						//ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
+					}
+
+					//ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
+					cJSON_Delete(jsonMsg);
+					free(mqttMsg);
+					xSemaphoreGive(xSemaphore);
+				} else {
+					continue;
+				}
 			}
+			printf("%i\n", count);
 
-			//ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
-			cJSON_Delete(jsonMsg);
-			free(mqttMsg);
+			free(macAdr);
+		} else {
+			continue;
 		}
 	}
-	printf("%i\n", count);
-
-	free(macAdr);
-
 }
 
 void setMac(char *macAdr)
@@ -133,11 +143,15 @@ esp_mqtt_client_config_t configureClient(char *macAdr)
 			.username = CONFIG_MQTT_USER,
 			.password = CONFIG_MQTT_PASS,
 			.client_id = macAdr,
-			.keepalive = 60,
-			.lwt_topic = "device/offline",
-			.lwt_qos = 0,
-			.lwt_retain = 1,
-			.lwt_msg = lwMsg, };
+//			.keepalive = 60,
+//			.lwt_topic = "device/offline",
+//			.lwt_qos = 0,
+//			.lwt_retain = 1,
+//			.lwt_msg = lwMsg,
+//			.task_stack = 8192,
+//			.buffer_size = 8912,
+
+			};
 
 	cJSON_Delete(jsonLW);
 	printf("clientID: %s\n", mqtt_cfg.client_id);

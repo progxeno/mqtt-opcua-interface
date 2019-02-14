@@ -9,51 +9,82 @@
 
 void opcua_server_task(void *pvParameter)
 {
-	ESP_LOGI(TAG, "Fire up OPC UA Server.");
-	config = UA_ServerConfig_new_default();
+	while (1) {
+		{
+			if (xSemaphore != NULL) {
+				/* See if we can obtain the semaphore.  If the semaphore is not
+				 available wait 10 ticks to see if it becomes free. */
+				if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
+					vTaskDelay(10 / portTICK_RATE_MS);
+					ESP_LOGI(TAG, "Fire up OPC UA Server.");
+					config = UA_ServerConfig_new_default();
 
-	//Set the connection config
-	UA_ConnectionConfig connectionConfig;
-	connectionConfig.recvBufferSize = 16384;
-	connectionConfig.sendBufferSize = 16384;
-	connectionConfig.maxMessageSize = 16384;
+					//Set the connection config
+					UA_ConnectionConfig connectionConfig;
+					connectionConfig.recvBufferSize = 16384;
+					connectionConfig.sendBufferSize = 16384;
+					connectionConfig.maxMessageSize = 16384;
 
-	UA_ServerNetworkLayer nl = UA_ServerNetworkLayerTCP(connectionConfig, 4840,
-	NULL);
+					UA_ServerNetworkLayer nl = UA_ServerNetworkLayerTCP(connectionConfig, 4840,
+					NULL);
 
-	//Set Discovery URL
-	UA_String esp32url = UA_String_fromChars("opc.tcp://10.0.0.100:4840/");
-	config->networkLayers = &nl;
-	config->networkLayersSize = 1;
-	config->networkLayers[0].discoveryUrl = UA_STRING("opc.tcp://esp32:4840");
+					//Set Discovery URL
+					UA_String esp32url = UA_String_fromChars("opc.tcp://10.0.0.1:4840/");
+					config->networkLayers = &nl;
+					config->networkLayersSize = 1;
+					config->networkLayers[0].discoveryUrl = UA_STRING("opc.tcp://esp32:4840");
 
-	config->applicationDescription.discoveryUrls = &esp32url;
-	config->applicationDescription.discoveryUrlsSize = 2;
-	config->applicationDescription.applicationUri = UA_STRING("urn:SIMATIC.S7-1500.OPC-UA.Application:Mete");
-	config->applicationDescription.applicationName = UA_LOCALIZEDTEXT("en-US", "ESP32Server");
-	config->applicationDescription.applicationType = UA_APPLICATIONTYPE_SERVER;
-	//config->applicationDescription.gatewayServerUri = UA_STRING("192.168.0.1");
-	UA_ServerConfig_set_customHostname(config, UA_STRING("esp32"));
-	UA_Server *server = UA_Server_new(config);
+					config->applicationDescription.discoveryUrls = &esp32url;
+					config->applicationDescription.discoveryUrlsSize = 2;
+					config->applicationDescription.applicationUri = UA_STRING("urn:SIMATIC.S7-1500.OPC-UA.Application:Mete");
+					config->applicationDescription.applicationName = UA_LOCALIZEDTEXT("en-US", "ESP32Server");
+					config->applicationDescription.applicationType = UA_APPLICATIONTYPE_SERVER;
+					//config->applicationDescription.gatewayServerUri = UA_STRING("192.168.0.1");
+					UA_ServerConfig_set_customHostname(config, UA_STRING("esp32"));
+					UA_Server *server = UA_Server_new(config);
 
-	addTemperatureNode(server);
+					addTemperatureNode(server);
 
-	UA_Server_run_startup(server);
-	UA_Boolean waitInternal = false;
-	while (running) {
-		UA_UInt16 timeout = UA_Server_run_iterate(server, waitInternal);
-		struct timeval tv;
-		tv.tv_sec = 0;
-		tv.tv_usec = timeout * 1000;
-		select(0, NULL, NULL, NULL, &tv);
+					UA_Server_run_startup(server);
+					UA_Boolean waitInternal = false;
+					xSemaphoreGive(xSemaphore);
+
+					while (1) {
+						if (xSemaphore != NULL) {
+							/* See if we can obtain the semaphore.  If the semaphore is not
+							 available wait 10 ticks to see if it becomes free. */
+							if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 0 ) == pdTRUE) {
+								vTaskDelay(10 / portTICK_RATE_MS);
+
+								UA_UInt16 timeout = UA_Server_run_iterate(server, waitInternal);
+								struct timeval tv;
+								tv.tv_sec = 0;
+								tv.tv_usec = timeout * 1000;
+								select(0, NULL, NULL, NULL, &tv);
+								xSemaphoreGive(xSemaphore);
+							} else {
+								continue;
+							}
+						} else {
+							continue;
+						}
+					}
+
+					ESP_LOGI(TAG, "Now going to stop the server.");
+					UA_Server_delete(server);
+					UA_ServerConfig_delete(config);
+					nl.deleteMembers(&nl);
+					ESP_LOGI("OPC_TASK", "opcua_task going to return");
+					vTaskDelete(NULL);
+
+				} else {
+					continue;
+				}
+			} else {
+				continue;
+			}
+		}
 	}
-
-	ESP_LOGI(TAG, "Now going to stop the server.");
-	UA_Server_delete(server);
-	UA_ServerConfig_delete(config);
-	nl.deleteMembers(&nl);
-	ESP_LOGI("OPC_TASK", "opcua_task going to return");
-	vTaskDelete(NULL);
 }
 
 void addTemperatureNode(UA_Server *server)
