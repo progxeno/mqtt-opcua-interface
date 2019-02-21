@@ -53,8 +53,6 @@ void opcua_pubsub_task(void *pvParameter)
 				vTaskDelay(1000 / portTICK_RATE_MS);
 				while (running) {
 
-
-
 					/* See if we can obtain the semaphore.  If the semaphore is not
 					 available wait 10 ticks to see if it becomes free. */
 //					if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
