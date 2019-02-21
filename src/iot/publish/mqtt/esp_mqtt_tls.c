@@ -11,6 +11,7 @@ void mqtt_esp_task(void *pvParameters)
 {
 	while (1) {
 		if (xSemaphore != NULL) {
+			vTaskDelay(10 / portTICK_RATE_MS);
 #ifdef SRC_DRIVER_PRSB25_H_
 			ESP_ERROR_CHECK(spi_master_config());
 			double sensor_data;
@@ -37,12 +38,12 @@ void mqtt_esp_task(void *pvParameters)
 
 			printf("error: %s\n", esp_err_to_name(retval));
 
-			xSemaphoreGive(xSemaphore);
 			connected = sendOnlineMsg(client, macAdr);
-			int count = 0;
-			int loop = 1;
-			while (loop <= 1000000) {
-				if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
+			if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
+
+				int count = 0;
+				int loop = 1;
+				while (loop <= 1000000) {
 					if (connected != 0) {
 						i++;
 						ESP_LOGW(TAG, "Attempt %i", i);
@@ -90,11 +91,12 @@ void mqtt_esp_task(void *pvParameters)
 					cJSON_Delete(jsonMsg);
 					free(mqttMsg);
 					xSemaphoreGive(xSemaphore);
-				} else {
-					continue;
+
 				}
+			} else {
+				continue;
 			}
-			printf("%i\n", count);
+			//printf("%i\n", count);
 
 			free(macAdr);
 		} else {

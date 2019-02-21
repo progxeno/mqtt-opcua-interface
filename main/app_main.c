@@ -14,14 +14,13 @@
 #include "freertos/semphr.h"
 #include "freertos/queue.h"
 #include "freertos/event_groups.h"
-
 #include "esp_log.h"
-//#include "global.h"
 
-#define MBED_TLS_MQTT
+#define MBED_TLS_SUB_MQTT
 
 #ifdef ESP_MQTT_TLS
 #include "esp_mqtt_tls.h"
+#include "opcua_pubsub.h"
 #elif defined MBED_TLS_MQTT
 #include "mbedtls_mqtt.h"
 #include "opcua_pubsub.h"
@@ -29,9 +28,16 @@
 #include "opcua_pubsub.h"
 #elif defined OPCUA_SERVER
 #include "opcua_server.h"
+#elif defined MBED_TLS_SUB_MQTT
+#include "mbedtls_sub_mqtt.h"
+#include "opcua_pubsub.h"
 //#elif defined LWMQTT
 //	#include "lw_mbedtls_mqtt.h"
 #endif
+
+#define MaxQueueSize 1
+#define MaxElementsPerQueue 500
+xQueueHandle MyQueueHandleId;
 
 /* The event group allows multiple bits for each event,
  but we only care about one event - are we connected
@@ -44,9 +50,23 @@ static EventGroupHandle_t wifi_event_group;
 TaskHandle_t TaskMQTT;
 TaskHandle_t TaskOPCUA;
 SemaphoreHandle_t xSemaphore = NULL;
+//char ptrTaskList[250];
 
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
+//				vTaskList(ptrTaskList);
+//				printf("Task  State   Prio    Stack    Num\n");
+//				printf("**********************************\n");
+//				printf(ptrTaskList);
+//				printf("**********************************\n");
+	xSemaphore = xSemaphoreCreateMutex();
+
+	MyQueueHandleId = xQueueCreate(MaxQueueSize, MaxElementsPerQueue);
+//				vTaskList(ptrTaskList);
+//				printf("Task  State   Prio    Stack    Num\n");
+//				printf("**********************************\n");
+//				printf(ptrTaskList);
+//				printf("**********************************\n");
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:
 			esp_wifi_connect();
@@ -55,20 +75,29 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 			/* Create the semaphore to guard a shared resource.  As we are using
 			 the semaphore for mutual exclusion we create a mutex semaphore
 			 rather than a binary semaphore. */
-//			vSemaphoreCreateBinary( xSemaphore );
-			xSemaphore = xSemaphoreCreateMutex();
 #ifdef SRC_IOT_ESP_MQTT_TLS_H_
-			xTaskCreate(&mqtt_esp_task, "mqtt_esp_task", 32768, NULL, 1, NULL);
+			xTaskCreatePinnedToCore(mqtt_esp_task, "mqtt_esp_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskMQTT, 1);
+//			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 0);
+//			xTaskCreate(&mqtt_esp_task, "mqtt_esp_task", 32768, NULL, 1, NULL);
 #elif defined SRC_IOT_MBEDTLS_MQTT_H_
-			//https://www.esp32.com/viewtopic.php?t=764
-			xTaskCreatePinnedToCore(mqtt_mbedtls_task, "mqtt_mbedtls_task", 16384, NULL, 2, &TaskMQTT, 1);
-			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 16384, NULL, 3, &TaskOPCUA, 0);
-//			xTaskCreate(mqtt_mbedtls_task, "mqtt_mbedtls_task", 16384, NULL, 2, &TaskMQTT);
-//			xTaskCreate(opcua_pubsub_task, "opcua_pubsub_task", 16384, NULL, 3, &TaskOPCUA);
-#elif defined SRC_IOT_OPCUA_PUBSUB_H_
-			xTaskCreate(&opcua_pubsub_task, "opcua_pubsub_task", 32768, NULL, 1, NULL);
+
+			xTaskCreatePinnedToCore(mqtt_mbedtls_task, "mqtt_mbedtls_task", 20000, NULL, tskIDLE_PRIORITY + 1, &TaskMQTT, 1);
+			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 10000, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 0);
+//			vTaskList(ptrTaskList);
+//			printf("Task  State   Prio    Stack    Num\n");
+//			printf("**********************************\n");
+//			printf(ptrTaskList);
+//			printf("**********************************\n");
+
+//#elif defined SRC_IOT_OPCUA_PUBSUB_H_
+//			xTaskCreate(&opcua_pubsub_task, "opcua_pubsub_task", 32768, NULL, 1, NULL);
 #elif defined SRC_IOT_OPC_UA_OPCUA_SERVER_H_
 			xTaskCreate(&opcua_server_task, "opcua_server_task", 32768, NULL, 1, NULL);
+#elif defined MBED_TLS_SUB_MQTT
+			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 14000, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
+			xTaskCreatePinnedToCore(mqtt_mbedtls_sub_task, "mqtt_mbedtls_sub_task", 10240, NULL, tskIDLE_PRIORITY + 2, &TaskMQTT, 1);
+			ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
+
 #endif
 			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
 			break;
@@ -92,7 +121,7 @@ static void wifi_init(void)
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
 
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_FLASH));
 	wifi_config_t wifi_config = {
 			.sta = {
 					.ssid = CONFIG_DEFAULT_SSID,

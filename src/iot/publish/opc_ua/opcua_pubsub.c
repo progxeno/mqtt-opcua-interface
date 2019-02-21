@@ -9,20 +9,19 @@
 
 void opcua_pubsub_task(void *pvParameter)
 {
-
 	printf("OPC UA running on Core: %i\n", xPortGetCoreID());
 	while (1) {
 		if (xSemaphore != NULL) {
 			/* See if we can obtain the semaphore.  If the semaphore is not
 			 available wait 10 ticks to see if it becomes free. */
 			if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
-				vTaskDelay( 10 / portTICK_RATE_MS );
+				vTaskDelay(10 / portTICK_RATE_MS);
 
 				UA_ServerConfig *config;
 				ESP_LOGI(TAG, "Fire up OPC UA Server.");
-				config = UA_ServerConfig_new_customBuffer(4840, NULL, 8192, 8192);
-//				config = UA_ServerConfig_new_default();
-				vTaskDelay(pdMS_TO_TICKS(1000));
+				config = UA_ServerConfig_new_customBuffer(4840, NULL, OPC_UA_BUF_SIZE, OPC_UA_BUF_SIZE);
+				config = UA_ServerConfig_new_default();
+//				vTaskDelay(pdMS_TO_TICKS(1000));
 
 				/* Details about the connection configuration and handling are located in the pubsub connection tutorial */
 				config->pubsubTransportLayers = (UA_PubSubTransportLayer *) UA_malloc(sizeof(UA_PubSubTransportLayer));
@@ -30,6 +29,7 @@ void opcua_pubsub_task(void *pvParameter)
 					UA_ServerConfig_delete(config);
 					return;
 				}
+				ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
 
 				config->customHostname = UA_STRING("ESP32");
 				UA_String esp32url = UA_String_fromChars("opc.udp://raspberrypi:4840");
@@ -50,28 +50,26 @@ void opcua_pubsub_task(void *pvParameter)
 
 				UA_Boolean waitInternal = false;
 				xSemaphoreGive(xSemaphore);
+				vTaskDelay(1000 / portTICK_RATE_MS);
 				while (running) {
 
-					if (xSemaphore != NULL) {
-						/* See if we can obtain the semaphore.  If the semaphore is not
-						 available wait 10 ticks to see if it becomes free. */
-						if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 0 ) == pdTRUE) {
-							vTaskDelay( 10 / portTICK_RATE_MS );
 
-							//	ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", xPortGetFreeHeapSize());	// esp_get_free_heap_size());
-							UA_UInt16 timeout = UA_Server_run_iterate(server, waitInternal);
-							struct timeval tv;
-							tv.tv_sec = 0;
-							tv.tv_usec = timeout * 1000;
-							select(0, NULL, NULL, NULL, &tv);
-							parseTemperature(server, createdNodeId);
-							xSemaphoreGive(xSemaphore);
-						} else {
-							continue;
-						}
-					} else {
-						continue;
-					}
+
+					/* See if we can obtain the semaphore.  If the semaphore is not
+					 available wait 10 ticks to see if it becomes free. */
+//					if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
+
+//					ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", xPortGetFreeHeapSize());	// esp_get_free_heap_size());
+						UA_UInt16 timeout = UA_Server_run_iterate(server, waitInternal);
+						struct timeval tv;
+						tv.tv_sec = 0;
+						tv.tv_usec = timeout * 1000;
+						select(0, NULL, NULL, NULL, &tv);
+						parseTemperature(server, createdNodeId);
+//						xSemaphoreGive(xSemaphore);
+//					} else {
+//						continue;
+//					}
 				}
 
 				ESP_LOGI(TAG, "Now going to stop the server.");
@@ -230,16 +228,26 @@ void removeNode(UA_Server *server, UA_NodeId nodeId)
 
 void parseTemperature(UA_Server *server, const UA_NodeId nodeId)
 {
-	float temp;
-	char *buf = UA_malloc(sizeof(char) * 10);
-	temp = (temprature_sens_read() - 32) / 1.8;
-	snprintf(buf, 10, "%f", temp);
-	UA_String temperature = UA_String_fromChars(buf);
+//	float temp;
+//	char *buf = UA_malloc(sizeof(char) * 10);
+	char RxBuffer[1][OPC_UA_BUF_SIZE];
 
-	UA_Variant value;
-	UA_Variant_setScalar(&value, &temperature, &UA_TYPES[UA_TYPES_STRING]);
-	UA_Server_writeValue(server, nodeId, value);
-	UA_free(buf);
-	UA_String_deleteMembers(&temperature);
+//	temp = (temprature_sens_read() - 32) / 1.8;
+//	snprintf(buf, 10, "%f", temp);
+	//UA_String temperature = UA_String_fromChars(buf);
+	if (pdTRUE == xQueueReceive(MyQueueHandleId, RxBuffer[0], 60000)) {
+		printf("OPCUA_PUB: Successfully recieved the data\n");
+		UA_String temperature = UA_String_fromChars(RxBuffer[0]);
+		UA_Variant value;
+		UA_Variant_setScalar(&value, &temperature, &UA_TYPES[UA_TYPES_STRING]);
+		UA_Server_writeValue(server, nodeId, value);
+//				UA_free(buf);
+		UA_String_deleteMembers(&temperature);
+	}
+
+//	} else {
+//		return;
+//	}
+
 }
 

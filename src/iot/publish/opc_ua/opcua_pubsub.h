@@ -43,6 +43,8 @@ extern "C" {
 #endif
 
 #define TAG "OPCUA_PUB_SUB"
+#define MaxQueueSize 1
+#define OPC_UA_BUF_SIZE 500
 
 	uint8_t mac[6];
 
@@ -52,7 +54,10 @@ extern "C" {
 	static UA_Server *server = NULL;
 	UA_NodeId createdNodeId;
 	UA_NodeId connectionIdent, publishedDataSetIdent, writerGroupIdent;
+	extern xQueueHandle MyQueueHandleId;
 	extern SemaphoreHandle_t xSemaphore;
+	extern TaskHandle_t TaskMQTT;
+	extern TaskHandle_t TaskOPCUA;
 
 	void opcua_pubsub_task(void *pvParameter);
 	void addPubSubConnection(UA_Server *server);

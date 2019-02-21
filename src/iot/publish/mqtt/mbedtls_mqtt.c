@@ -6,15 +6,22 @@
  */
 #include "mbedtls_mqtt.h"
 
+//char ptrTaskList[250];
+
 void mqtt_mbedtls_task(void *pvParameters)
 {
+	//vTaskEndScheduler();
 	printf("MQTT running on Core: %i\n", xPortGetCoreID());
+
 	while (1) {
 		if (xSemaphore != NULL) {
+			vTaskDelay(100 / portTICK_RATE_MS);
+
 			/* See if we can obtain the semaphore.  If the semaphore is not
 			 available wait 10 ticks to see if it becomes free. */
-			if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
-				vTaskDelay( 10 / portTICK_RATE_MS );
+			if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 100 ) == pdTRUE) {
+				vTaskDelay(10 / portTICK_RATE_MS);
+
 #ifdef SRC_DRIVER_PRSB25_H_
 				ESP_ERROR_CHECK(spi_master_config());
 				double sensor_data;
@@ -42,14 +49,15 @@ void mqtt_mbedtls_task(void *pvParameters)
 				configureClient(&data, macAdr);
 				startClient(&client, &network, &data);
 				sendOnlineMsg(client, macAdr);
-				xSemaphoreGive(xSemaphore);
+				ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
 
+				xSemaphoreGive(xSemaphore);
 				while (1) {
+					vTaskDelay(10 / portTICK_RATE_MS);
 
 					/* See if we can obtain the semaphore.  If the semaphore is not
 					 available wait 10 ticks to see if it becomes free. */
-					if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 0 ) == pdTRUE) {
-						vTaskDelay( 10 / portTICK_RATE_MS );
+					if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
 
 						jsonMsg = cJSON_CreateObject();
 						temp = round(((temprature_sens_read() - 32) / 1.8) * 100.0) / 100.0;
@@ -79,6 +87,11 @@ void mqtt_mbedtls_task(void *pvParameters)
 						} else if (ret == ESP_OK) {
 							MQTTPublish(&client, "device/id1/data", &message);
 #ifdef SRC_DRIVER_PRSB25_H_
+//							vTaskList(ptrTaskList);
+//							printf("Task  State   Prio    Stack    Num\n");
+//							printf("**********************************\n");
+//							printf(ptrTaskList);
+//							printf("**********************************\n");
 							printf("Sensordata: %.3f\n", sensor_data);
 #elif defined DRIVER_MB1222_H_
 							printf("Sensordata: %i\n", sensor_data);
@@ -106,6 +119,7 @@ void mqtt_mbedtls_task(void *pvParameters)
 			continue;
 		}
 	}
+	vTaskDelete(NULL);
 }
 void startClient(MQTTClient *client, Network *network, MQTTPacket_connectData *data)
 {
@@ -120,7 +134,13 @@ void startClient(MQTTClient *client, Network *network, MQTTPacket_connectData *d
 			i++;
 			ESP_LOGW(TAG, "Connection failed: %i ... Reconnecting", retval);
 			ESP_LOGW(TAG, "Attempt %i", i);
+//			vTaskList(ptrTaskList);
+//			printf("Task  State   Prio    Stack    Num\n");
+//			printf("**********************************\n");
+//			printf(ptrTaskList);
+//			printf("**********************************\n");
 			retval = NetworkConnect(network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+
 
 		}
 		if (retval != 0) {
@@ -179,9 +199,12 @@ void configureClient(MQTTPacket_connectData *data, char *macAdr)
 
 	lwMsg = cJSON_Print(jsonLW);
 
+	char buf[30];
+	sprintf(buf, macAdr, esp_random());
+
 	MQTTString clientId = MQTTString_initializer
 	;
-	clientId.cstring = macAdr;
+	clientId.cstring = buf;
 	MQTTString username = MQTTString_initializer
 	;
 	username.cstring = CONFIG_MQTT_USER;
@@ -190,7 +213,6 @@ void configureClient(MQTTPacket_connectData *data, char *macAdr)
 	password.cstring = CONFIG_MQTT_PASS;
 
 	data->clientID = clientId;
-	data->willFlag = 0;
 	data->MQTTVersion = 4; // 3 = 3.1 4 = 3.1.1
 	data->keepAliveInterval = 60;
 	data->cleansession = 1;
