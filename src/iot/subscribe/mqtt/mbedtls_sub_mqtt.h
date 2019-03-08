@@ -45,6 +45,7 @@ extern "C" {
 #define MQTT_WEBSOCKET 0  // 0=no 1=yes
 #define MaxQueueSize 1
 
+	static int it = 0;
 	uint8_t mac[6];
 
 	unsigned char mqtt_sendBuf[MQTT_BUF_SIZE];
@@ -55,8 +56,8 @@ extern "C" {
 	extern TaskHandle_t TaskOPCUA;
 	void mqtt_message_handler(MessageData *md);
 	void mqtt_mbedtls_sub_task(void *pvParameters);
-	void setMac2(char *macAdr);
-	void configureClient2(MQTTPacket_connectData *data, char *macAdr);
-	void startClient2(MQTTClient *client, Network *network, MQTTPacket_connectData *data);
+	void setMac(char *macAdr);
+	void configureClient(MQTTPacket_connectData *data, char *macAdr);
+	void startClient(MQTTClient *client, Network *network, MQTTPacket_connectData *data);
 
 #endif /* SRC_IOT_SUBSCRIBE_MQTT_MBEDTLS_SUB_MQTT_H_ */

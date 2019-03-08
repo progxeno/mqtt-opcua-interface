@@ -14,13 +14,13 @@ void mqtt_mbedtls_task(void *pvParameters)
 	printf("MQTT running on Core: %i\n", xPortGetCoreID());
 
 	while (1) {
-		if (xSemaphore != NULL) {
-			vTaskDelay(100 / portTICK_RATE_MS);
-
-			/* See if we can obtain the semaphore.  If the semaphore is not
-			 available wait 10 ticks to see if it becomes free. */
-			if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 100 ) == pdTRUE) {
-				vTaskDelay(10 / portTICK_RATE_MS);
+//		if (xSemaphore != NULL) {
+//			vTaskDelay(100 / portTICK_RATE_MS);
+//
+//			/* See if we can obtain the semaphore.  If the semaphore is not
+//			 available wait 10 ticks to see if it becomes free. */
+//			if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 100 ) == pdTRUE) {
+//				vTaskDelay(10 / portTICK_RATE_MS);
 
 #ifdef SRC_DRIVER_PRSB25_H_
 				ESP_ERROR_CHECK(spi_master_config());
@@ -51,13 +51,13 @@ void mqtt_mbedtls_task(void *pvParameters)
 				sendOnlineMsg(client, macAdr);
 				ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
 
-				xSemaphoreGive(xSemaphore);
+//				xSemaphoreGive(xSemaphore);
 				while (1) {
 					vTaskDelay(10 / portTICK_RATE_MS);
 
 					/* See if we can obtain the semaphore.  If the semaphore is not
 					 available wait 10 ticks to see if it becomes free. */
-					if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
+//					if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
 
 						jsonMsg = cJSON_CreateObject();
 						temp = round(((temprature_sens_read() - 32) / 1.8) * 100.0) / 100.0;
@@ -106,18 +106,18 @@ void mqtt_mbedtls_task(void *pvParameters)
 						//ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
 						cJSON_Delete(jsonMsg);
 						free(mqttMsg);
-						xSemaphoreGive(xSemaphore);
-					} else {
-						continue;
-					}
+//						xSemaphoreGive(xSemaphore);
+//					} else {
+//						continue;
+//					}
 				}
 
-			} else {
-				continue;
-			}
-		} else {
-			continue;
-		}
+//			} else {
+//				continue;
+//			}
+//		} else {
+//			continue;
+//		}
 	}
 	vTaskDelete(NULL);
 }

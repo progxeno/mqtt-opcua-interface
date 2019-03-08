@@ -10,16 +10,18 @@
 #pragma GCC diagnostic ignored "-Wunused-function"
 void mqtt_message_handler(MessageData *md)
 {
-//	xSemaphoreTake(xSemaphore, (TickType_t ) 1000);
 	ESP_LOGI(TAG, "Topic received!: %.*s %.*s", md->topicName->lenstring.len, md->topicName->lenstring.data, md->message->payloadlen,
 				(char* ) md->message->payload);
 	char TxBuffer[1][MQTT_BUF_SIZE];
-	sprintf(TxBuffer[0], "%.*s", md->message->payloadlen, (char*) md->message->payload);
-	if (pdTRUE == xQueueSend(MyQueueHandleId, TxBuffer[0], 100)) {
-		printf("MQTT_SUB: Successfully sent the data\n");
-//		xSemaphoreGive(xSemaphore);
+	sprintf(TxBuffer[0], "%.*s count %i\n", md->message->payloadlen, (char*) md->message->payload, it);
+	if (pdTRUE == xQueueSend(MyQueueHandleId, TxBuffer[0], 10) && xSemaphoreTake(xSemaphore, (TickType_t ) 100) == pdTRUE) {
+//		printf("MQTT_SUB: Successfully sent the data\n");
+		xSemaphoreGive(xSemaphore);
 
 	}
+	it++;
+
+	vTaskDelay(10);
 
 }
 #pragma GCC diagnostic pop
@@ -44,9 +46,9 @@ void mqtt_mbedtls_sub_task(void *pvParameters)
 				NetworkInit(&network);
 				network.websocket = MQTT_WEBSOCKET;
 
-				setMac2(macAdr);
-				configureClient2(&data, macAdr);
-				startClient2(&client, &network, &data);
+				setMac(macAdr);
+				configureClient(&data, macAdr);
+				startClient(&client, &network, &data);
 				xSemaphoreGive(xSemaphore);
 
 				ESP_LOGI(TAG, "MQTTSubscribe  ...");
@@ -76,14 +78,14 @@ void mqtt_mbedtls_sub_task(void *pvParameters)
 	vTaskDelete(NULL);
 }
 
-void setMac2(char *macAdr)
+void setMac(char *macAdr)
 {
 	esp_base_mac_addr_set(mac);
 	esp_efuse_mac_get_default(mac);
 	snprintf(macAdr, 13, "%X%X%X%X%X%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
-void configureClient2(MQTTPacket_connectData *data, char *macAdr)
+void configureClient(MQTTPacket_connectData *data, char *macAdr)
 {
 //	cJSON* jsonLW = cJSON_CreateObject();
 //	char* lwMsg;
@@ -123,20 +125,27 @@ void configureClient2(MQTTPacket_connectData *data, char *macAdr)
 
 }
 
-void startClient2(MQTTClient *client, Network *network, MQTTPacket_connectData *data)
+void startClient(MQTTClient *client, Network *network, MQTTPacket_connectData *data)
 {
 	int ret;
 	ESP_LOGI(TAG, "NetworkConnect %s:%d ...", CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
 	int retval = NetworkConnect(network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
-
+//	vTaskDelay(pdMS_TO_TICKS(1000));
+//	char ptrTaskList[250];
 	if (retval != 0) {
 		int i = 1;
-		while (retval != 0 && i <= 100) {
+		while (retval != 0 && i <= 10) {
 			vTaskDelay(pdMS_TO_TICKS(1000));
 			i++;
 			ESP_LOGW(TAG, "Connection failed: %i ... Reconnecting", retval);
 			ESP_LOGW(TAG, "Attempt %i", i);
 			retval = NetworkConnect(network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+//			vTaskList(ptrTaskList);
+//			printf("Task  State   Prio    Stack    Num\n");
+//			printf("**********************************\n");
+//			printf(ptrTaskList);
+//			printf("**********************************\n");
+			ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
 
 		}
 		if (retval != 0) {

@@ -23,7 +23,6 @@
 #include "opcua_pubsub.h"
 #elif defined MBED_TLS_MQTT
 #include "mbedtls_mqtt.h"
-#include "opcua_pubsub.h"
 #elif defined OPCUA_PUB_SUB
 #include "opcua_pubsub.h"
 #elif defined OPCUA_SERVER
@@ -54,19 +53,9 @@ SemaphoreHandle_t xSemaphore = NULL;
 
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
-//				vTaskList(ptrTaskList);
-//				printf("Task  State   Prio    Stack    Num\n");
-//				printf("**********************************\n");
-//				printf(ptrTaskList);
-//				printf("**********************************\n");
 	xSemaphore = xSemaphoreCreateMutex();
 
 	MyQueueHandleId = xQueueCreate(MaxQueueSize, MaxElementsPerQueue);
-//				vTaskList(ptrTaskList);
-//				printf("Task  State   Prio    Stack    Num\n");
-//				printf("**********************************\n");
-//				printf(ptrTaskList);
-//				printf("**********************************\n");
 	switch (event->event_id) {
 		case SYSTEM_EVENT_STA_START:
 			esp_wifi_connect();
@@ -82,7 +71,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 #elif defined SRC_IOT_MBEDTLS_MQTT_H_
 
 			xTaskCreatePinnedToCore(mqtt_mbedtls_task, "mqtt_mbedtls_task", 20000, NULL, tskIDLE_PRIORITY + 1, &TaskMQTT, 1);
-			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 10000, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 0);
+//			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 10000, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 0);
 //			vTaskList(ptrTaskList);
 //			printf("Task  State   Prio    Stack    Num\n");
 //			printf("**********************************\n");
@@ -95,6 +84,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 			xTaskCreate(&opcua_server_task, "opcua_server_task", 32768, NULL, 1, NULL);
 #elif defined MBED_TLS_SUB_MQTT
 			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 14000, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
+			vTaskDelay(500 / portTICK_RATE_MS);
 			xTaskCreatePinnedToCore(mqtt_mbedtls_sub_task, "mqtt_mbedtls_sub_task", 10240, NULL, tskIDLE_PRIORITY + 2, &TaskMQTT, 1);
 			ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
 
@@ -121,7 +111,8 @@ static void wifi_init(void)
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT()
 
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_FLASH));
+	esp_wifi_set_ps(WIFI_PS_NONE);
+	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 	wifi_config_t wifi_config = {
 			.sta = {
 					.ssid = CONFIG_DEFAULT_SSID,

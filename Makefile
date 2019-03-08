@@ -10,4 +10,3 @@ PROJECT_NAME := masterarbeit
 EXTRA_COMPONENT_DIRS += $(PROJECT_PATH)/../../../
 
 include $(IDF_PATH)/make/project.mk
-
