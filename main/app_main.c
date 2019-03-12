@@ -83,7 +83,8 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 #elif defined SRC_IOT_OPC_UA_OPCUA_SERVER_H_
 			xTaskCreate(&opcua_server_task, "opcua_server_task", 32768, NULL, 1, NULL);
 #elif defined MBED_TLS_SUB_MQTT
-			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 14000, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
+			vTaskDelay(1000 / portTICK_RATE_MS);
+			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
 			vTaskDelay(500 / portTICK_RATE_MS);
 			xTaskCreatePinnedToCore(mqtt_mbedtls_sub_task, "mqtt_mbedtls_sub_task", 10240, NULL, tskIDLE_PRIORITY + 2, &TaskMQTT, 1);
 			ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());

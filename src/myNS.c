@@ -14,7 +14,7 @@ static UA_StatusCode function_myNS_1_begin(UA_Server *server, UA_UInt16* ns)
 #endif
 	attr.writeMask = 0;
 	attr.userWriteMask = 0;
-	retVal |= UA_Server_addNode_begin(server, UA_NODECLASS_OBJECTTYPE, UA_NODEID_NUMERIC(ns[1], 1001), UA_NODEID_NUMERIC(ns[0], 58),
+	retVal |= UA_Server_addNode_begin(server, UA_NODECLASS_OBJECTTYPE, UA_NODEID_NUMERIC(ns[1], UA_NS0ID_PUBLISHSUBSCRIBE), UA_NODEID_NUMERIC(ns[0], 58),
 										UA_NODEID_NUMERIC(ns[0], 45), UA_QUALIFIEDNAME(ns[1], "Message"), UA_NODEID_NULL,
 										(const UA_NodeAttributes*) &attr, &UA_TYPES[UA_TYPES_OBJECTTYPEATTRIBUTES], NULL, NULL);
 	return retVal;
@@ -22,7 +22,7 @@ static UA_StatusCode function_myNS_1_begin(UA_Server *server, UA_UInt16* ns)
 
 static UA_StatusCode function_myNS_1_finish(UA_Server *server, UA_UInt16* ns)
 {
-	return UA_Server_addNode_finish(server, UA_NODEID_NUMERIC(ns[1], 1001));
+	return UA_Server_addNode_finish(server, UA_NODEID_NUMERIC(ns[1], UA_NS0ID_PUBLISHSUBSCRIBE));
 }
 
 /* ManufacturerName - ns=1;i=6001 */
@@ -45,7 +45,7 @@ static UA_StatusCode function_myNS_2_begin(UA_Server *server, UA_UInt16* ns)
 #endif
 	attr.writeMask = 0;
 	attr.userWriteMask = 0;
-	retVal |= UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, UA_NODEID_NUMERIC(ns[1], 6001), UA_NODEID_NUMERIC(ns[1], 1001),
+	retVal |= UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, UA_NODEID_NUMERIC(ns[1], 6001), UA_NODEID_NUMERIC(ns[1], UA_NS0ID_PUBLISHSUBSCRIBE),
 										UA_NODEID_NUMERIC(ns[0], 47), UA_QUALIFIEDNAME(ns[1], "ID"), UA_NODEID_NUMERIC(ns[0], 63),
 										(const UA_NodeAttributes*) &attr, &UA_TYPES[UA_TYPES_VARIABLEATTRIBUTES], NULL, NULL);
 	retVal |= UA_Server_addReference(server, UA_NODEID_NUMERIC(ns[1], 6001), UA_NODEID_NUMERIC(ns[0], 37), UA_EXPANDEDNODEID_NUMERIC(ns[0], 78),
@@ -78,7 +78,7 @@ static UA_StatusCode function_myNS_3_begin(UA_Server *server, UA_UInt16* ns)
 #endif
 	attr.writeMask = 0;
 	attr.userWriteMask = 0;
-	retVal |= UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, UA_NODEID_NUMERIC(ns[1], 6002), UA_NODEID_NUMERIC(ns[1], 1001),
+	retVal |= UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, UA_NODEID_NUMERIC(ns[1], 6002), UA_NODEID_NUMERIC(ns[1], UA_NS0ID_PUBLISHSUBSCRIBE),
 										UA_NODEID_NUMERIC(ns[0], 47), UA_QUALIFIEDNAME(ns[1], "Value"), UA_NODEID_NUMERIC(ns[0], 63),
 										(const UA_NodeAttributes*) &attr, &UA_TYPES[UA_TYPES_VARIABLEATTRIBUTES], NULL, NULL);
 	retVal |= UA_Server_addReference(server, UA_NODEID_NUMERIC(ns[1], 6002), UA_NODEID_NUMERIC(ns[0], 37), UA_EXPANDEDNODEID_NUMERIC(ns[0], 78),
@@ -109,7 +109,7 @@ static UA_StatusCode function_myNS_4_begin(UA_Server *server, UA_UInt16* ns)
 #endif
 	attr.writeMask = 0;
 	attr.userWriteMask = 0;
-	retVal |= UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, UA_NODEID_NUMERIC(ns[1], 6003), UA_NODEID_NUMERIC(ns[1], 1001),
+	retVal |= UA_Server_addNode_begin(server, UA_NODECLASS_VARIABLE, UA_NODEID_NUMERIC(ns[1], 6003), UA_NODEID_NUMERIC(ns[1], UA_NS0ID_PUBLISHSUBSCRIBE),
 										UA_NODEID_NUMERIC(ns[0], 47), UA_QUALIFIEDNAME(ns[1], "Temperature"), UA_NODEID_NUMERIC(ns[0], 63),
 										(const UA_NodeAttributes*) &attr, &UA_TYPES[UA_TYPES_VARIABLEATTRIBUTES], NULL, NULL);
 	retVal |= UA_Server_addReference(server, UA_NODEID_NUMERIC(ns[1], 6003), UA_NODEID_NUMERIC(ns[0], 37), UA_EXPANDEDNODEID_NUMERIC(ns[0], 78),
