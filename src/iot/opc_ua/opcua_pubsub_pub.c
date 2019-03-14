@@ -1,92 +1,72 @@
 /*
- * opcua_pubsub.c
+ * opcua_pubsub_pub.c
  *
- *  Created on: 09.01.2019
+ *  Created on: 12.03.2019
  *      Author: miosga.mario
  */
 
-#include "opcua_pubsub.h"
+#include "opcua_pubsub_pub.h"
 
-void opcua_pubsub_task(void *pvParameter)
+void opcua_pubsub_pub_task(void *pvParameter)
 {
 	printf("OPC UA running on Core: %i\n", xPortGetCoreID());
 	while (1) {
-		if (xSemaphore != NULL) {
-			/* See if we can obtain the semaphore.  If the semaphore is not
-			 available wait 10 ticks to see if it becomes free. */
-			if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
-				vTaskDelay(10 / portTICK_RATE_MS);
 
-				UA_ServerConfig *config;
-				ESP_LOGI(TAG, "Fire up OPC UA Server.");
-				config = UA_ServerConfig_new_default();
+		UA_ServerConfig *config;
+		ESP_LOGI(TAG, "Fire up OPC UA Server.");
+		config = UA_ServerConfig_new_default();
 
-				/* Details about the connection configuration and handling are located in the pubsub connection tutorial */
-				config->pubsubTransportLayers = (UA_PubSubTransportLayer *) UA_calloc(1, sizeof(UA_PubSubTransportLayer));
-				if (!config->pubsubTransportLayers) {
-					UA_ServerConfig_delete(config);
-					return;
-				}
-				ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
-
-				config->customHostname = UA_STRING("ESP32");
-				UA_String esp32url = UA_String_fromChars("opc.udp://raspberrypi:4840");
-				config->applicationDescription.discoveryUrls = &esp32url;
-				config->pubsubTransportLayers[0] = UA_PubSubTransportLayerUDPMP();
-				config->pubsubTransportLayersSize++;
-
-				UA_Server *server = UA_Server_new(config);
-
-				UA_NodeId connectionIdent, publishedDataSetIdent, writerGroupIdent, dataSetWriterIdent;
-				esp_base_mac_addr_set(mac);
-				esp_efuse_mac_get_default(mac);
-
-				addPubSubConnection(server, UA_STRING("Connection 1"), UA_STRING("opc.udp://224.0.0.22:4840/"), &connectionIdent);
-				addPublishedDataSet(server, UA_STRING("Message 1"), &publishedDataSetIdent);
-				addWriterGroup(server, connectionIdent, UA_STRING("WriterGroup 1"), 10, &writerGroupIdent);
-				addDataSetWriter(server, writerGroupIdent, publishedDataSetIdent, UA_STRING("DataSetWriter 1"), &dataSetWriterIdent);
-
-				addNewDataSetField(server, UA_STRING("ID"), UA_NODEID_NUMERIC(0, 6001), publishedDataSetIdent);
-				addNewDataSetField(server, UA_STRING("Value"), UA_NODEID_NUMERIC(0, 6002), publishedDataSetIdent);
-				addNewDataSetField(server, UA_STRING("Temperature"), UA_NODEID_NUMERIC(0, 6003), publishedDataSetIdent);
-
-				UA_Server_run_startup(server);
-
-				UA_Boolean waitInternal = false;
-				xSemaphoreGive(xSemaphore);
-				vTaskDelay(500 / portTICK_RATE_MS);
-				while (1) {
-					char RxBuffer[1][OPC_UA_BUF_SIZE];
-					/* See if we can obtain the semaphore.  If the semaphore is not
-					 available wait 10 ticks to see if it becomes free. */
-					if (pdTRUE == xQueueReceive(MyQueueHandleId, RxBuffer[0], 10) && xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
-						update(server, UA_QUALIFIEDNAME(1, "ID"), RxBuffer[0]);
-						update(server, UA_QUALIFIEDNAME(1, "Value"), RxBuffer[0]);
-						update(server, UA_QUALIFIEDNAME(1, "Temperature"), RxBuffer[0]);
-
-						UA_UInt16 timeout = UA_Server_run_iterate(server, waitInternal);
-						struct timeval tv;
-						tv.tv_sec = 0;
-						tv.tv_usec = timeout * 1000;
-						select(0, NULL, NULL, NULL, &tv);
-						xSemaphoreGive(xSemaphore);
-					} else {
-						xSemaphoreGive(xSemaphore);
-						continue;
-					}
-				}
-
-				ESP_LOGI(TAG, "Now going to stop the server.");
-				UA_Server_delete(server);
-				UA_ServerConfig_delete(config);
-				ESP_LOGI(TAG, "opcua_task going to return");
-				vTaskDelete(NULL);
-			} else {
-				continue;
-			}
-		} else {
-			continue;
+		/* Details about the connection configuration and handling are located in the pubsub connection tutorial */
+		config->pubsubTransportLayers = (UA_PubSubTransportLayer *) UA_calloc(1, sizeof(UA_PubSubTransportLayer));
+		if (!config->pubsubTransportLayers) {
+			UA_ServerConfig_delete(config);
+			return;
 		}
+		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
+
+		config->customHostname = UA_STRING("ESP32");
+		UA_String esp32url = UA_String_fromChars("opc.udp://raspberrypi:4840");
+		config->applicationDescription.discoveryUrls = &esp32url;
+		config->pubsubTransportLayers[0] = UA_PubSubTransportLayerUDPMP();
+		config->pubsubTransportLayersSize++;
+		UA_Server *server = UA_Server_new(config);
+#ifdef SRC_DRIVER_PRSB25_H_
+		ESP_ERROR_CHECK(spi_master_config());
+#elif defined DRIVER_MB1222_H_
+		ESP_ERROR_CHECK(i2c_master_init());
+#endif
+		UA_NodeId connectionIdent, publishedDataSetIdent, writerGroupIdent, dataSetWriterIdent;
+		esp_base_mac_addr_set(mac);
+		esp_efuse_mac_get_default(mac);
+
+		addPubSubConnection(server, UA_STRING("Connection 1"), UA_STRING("opc.udp://224.0.0.22:4840/"), &connectionIdent);
+		addPublishedDataSet(server, UA_STRING("Message 1"), &publishedDataSetIdent);
+		addWriterGroup(server, connectionIdent, UA_STRING("WriterGroup 1"), 10, &writerGroupIdent);
+		addDataSetWriter(server, writerGroupIdent, publishedDataSetIdent, UA_STRING("DataSetWriter 1"), &dataSetWriterIdent);
+
+		addNewDataSetField(server, UA_STRING("ID"), UA_NODEID_NUMERIC(0, 6001), publishedDataSetIdent);
+		addNewDataSetField(server, UA_STRING("Value"), UA_NODEID_NUMERIC(0, 6002), publishedDataSetIdent);
+		addNewDataSetField(server, UA_STRING("Temperature"), UA_NODEID_NUMERIC(0, 6003), publishedDataSetIdent);
+
+		writeMACadr(server);
+
+		UA_Boolean running = true;
+		UA_Server_run_startup(server);
+		UA_Boolean waitInternal = false;
+		while (running) {
+			update(server);
+			UA_UInt16 timeout = UA_Server_run_iterate(server, waitInternal);
+			struct timeval tv;
+			tv.tv_sec = 0;
+			tv.tv_usec = timeout * 1000;
+			select(0, NULL, NULL, NULL, &tv);
+		}
+
+		ESP_LOGI(TAG, "Now going to stop the server.");
+		UA_Server_delete(server);
+		UA_ServerConfig_delete(config);
+		ESP_LOGI(TAG, "opcua_task going to return");
+		vTaskDelete(NULL);
 	}
 }
 
@@ -97,6 +77,7 @@ void addPubSubConnection(UA_Server *server, UA_String connectionName, UA_String 
 	connectionConfig.name = connectionName;
 	connectionConfig.transportProfileUri = UA_STRING("http://opcfoundation.org/UA-Profile/Transport/pubsub-udp-uadp");
 	connectionConfig.enabled = UA_TRUE;
+
 	UA_NetworkAddressUrlDataType networkAddressUrl = {
 			UA_STRING_NULL,
 			addressUrl };
@@ -126,6 +107,7 @@ void addPublishedDataSet(UA_Server *server, UA_String pdsName, UA_NodeId *assign
 	memset(&pdsConfig, 0, sizeof(UA_PublishedDataSetConfig));
 	pdsConfig.publishedDataSetType = UA_PUBSUB_DATASET_PUBLISHEDITEMS;
 	pdsConfig.name = pdsName;
+
 	UA_Server_addPublishedDataSet(server, &pdsConfig, assignedId);
 }
 
@@ -140,6 +122,7 @@ void addWriterGroup(UA_Server *server, UA_NodeId parentConnection, UA_String nam
 	memset(&writerGroupConfig, 0, sizeof(writerGroupConfig));
 	writerGroupConfig.name = name;
 	writerGroupConfig.publishingInterval = interval;
+	writerGroupConfig.enabled = UA_FALSE;
 	writerGroupConfig.encodingMimeType = UA_PUBSUB_ENCODING_UADP;
 	UA_Server_addWriterGroup(server, parentConnection, &writerGroupConfig, assignedId);
 }
@@ -154,6 +137,7 @@ void addDataSetWriter(UA_Server *server, UA_NodeId parentWriterGroup, UA_NodeId 
 	UA_DataSetWriterConfig dataSetWriterConfig;
 	memset(&dataSetWriterConfig, 0, sizeof(dataSetWriterConfig));
 	dataSetWriterConfig.name = name;
+	dataSetWriterConfig.keyFrameCount = 10;
 	UA_Server_addDataSetWriter(server, parentWriterGroup, connectedPDS, &dataSetWriterConfig, assignedId);
 }
 
@@ -191,6 +175,7 @@ void addNewDataSetField(UA_Server *server, UA_String name, UA_NodeId valueNodeId
 	dataSetFieldConfig.field.variable.publishParameters.publishedVariable = valueNodeId;
 	dataSetFieldConfig.field.variable.publishParameters.attributeId = UA_ATTRIBUTEID_VALUE;
 	UA_Server_addDataSetField(server, publishedDataSetIdent, &dataSetFieldConfig, &dataSetFieldIdent);
+
 	free(convert);
 }
 
@@ -201,43 +186,14 @@ void removeNode(UA_Server *server, UA_NodeId nodeId)
 
 }
 
-void update(UA_Server *server, UA_QualifiedName targetName, char *data)
+void update(UA_Server *server)
 {
 
-	UA_NodeId nodeID = findNode(server, targetName, UA_NODEID_NUMERIC(0, 47), UA_NODEID_NUMERIC(0, UA_NS0ID_PUBLISHSUBSCRIBE));
-
-	char* objectName = (char*) UA_malloc(sizeof(char) * targetName.name.length + 1);
-	memcpy(objectName, targetName.name.data, targetName.name.length);
-	objectName[targetName.name.length] = '\0';
-
-	cJSON * root = cJSON_Parse(data);
-	if (cJSON_GetObjectItem(root, objectName) != NULL) {
-
-		if (cJSON_GetObjectItem(root, objectName)->type == cJSON_String) {
-			char *jsonValue = cJSON_GetObjectItem(root, objectName)->valuestring;
-			UA_String recievedValue = UA_String_fromChars(jsonValue);
-
-			UA_Variant value;
-			UA_Variant_setScalar(&value, &recievedValue, &UA_TYPES[UA_TYPES_STRING]);
-
-			UA_Server_writeValue(server, nodeID, value);
-			UA_String_deleteMembers(&recievedValue);
-
-		} else if (cJSON_GetObjectItem(root, objectName)->type == cJSON_Number) {
-			double jsonValue = cJSON_GetObjectItem(root, objectName)->valuedouble;
-			char bufValue[7];
-			snprintf(bufValue, 7, "%3.2f", jsonValue);
-			UA_String recievedValue = UA_String_fromChars(bufValue);
-			UA_Variant value;
-			UA_Variant_setScalar(&value, &recievedValue, &UA_TYPES[UA_TYPES_STRING]);
-
-			UA_Server_writeValue(server, nodeID, value);
-			UA_String_deleteMembers(&recievedValue);
-		}
-	}
-
-	free(objectName);
-	cJSON_Delete(root);
+	UA_NodeId nodeID = findNode(server, UA_QUALIFIEDNAME(1, "Temperature"), UA_NODEID_NUMERIC(0, 47),
+								UA_NODEID_NUMERIC(0, UA_NS0ID_PUBLISHSUBSCRIBE));
+	parseTemperature(server, nodeID);
+	nodeID = findNode(server, UA_QUALIFIEDNAME(1, "Value"), UA_NODEID_NUMERIC(0, 47), UA_NODEID_NUMERIC(0, UA_NS0ID_PUBLISHSUBSCRIBE));
+	parseSensorValue(server, nodeID);
 }
 
 UA_NodeId findNode(UA_Server *server_, UA_QualifiedName targetName, UA_NodeId referenceTypeId, UA_NodeId startingNode)
@@ -262,5 +218,71 @@ UA_NodeId findNode(UA_Server *server_, UA_QualifiedName targetName, UA_NodeId re
 	UA_NodeId_copy(&bpr.targets[0].targetId.nodeId, &resultNodeId);
 	UA_BrowsePathResult_deleteMembers(&bpr);
 	return resultNodeId;
+}
+
+void writeMACadr(UA_Server *server)
+{
+	UA_NodeId nodeID = findNode(server, UA_QUALIFIEDNAME(1, "ID"), UA_NODEID_NUMERIC(0, 47), UA_NODEID_NUMERIC(0, UA_NS0ID_PUBLISHSUBSCRIBE));
+
+	char *mac_buf = UA_malloc(sizeof(char) * 13);
+	snprintf(mac_buf, 13, "%X%X%X%X%X%X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	UA_String ua_mac = UA_String_fromChars(mac_buf);
+	UA_Variant value;
+	UA_Variant_setScalar(&value, &ua_mac, &UA_TYPES[UA_TYPES_STRING]);
+	UA_Server_writeValue(server, nodeID, value);
+	UA_free(mac_buf);
+	UA_String_deleteMembers(&ua_mac);
+
+}
+
+void parseTemperature(UA_Server *server, const UA_NodeId nodeId)
+{
+	float temp;
+	char *buf = UA_malloc(sizeof(char) * 10);
+
+	temp = (temprature_sens_read() - 32) / 1.8;
+	snprintf(buf, 10, "%f", temp);
+	UA_String temperature = UA_String_fromChars(buf);
+	UA_Variant value;
+	UA_Variant_setScalar(&value, &temperature, &UA_TYPES[UA_TYPES_STRING]);
+	UA_Server_writeValue(server, nodeId, value);
+	UA_free(buf);
+	UA_String_deleteMembers(&temperature);
+
+}
+
+void parseSensorValue(UA_Server *server, const UA_NodeId nodeId)
+{
+
+	int ret;
+	char *buf = UA_malloc(sizeof(char) * 10);
+#ifdef SRC_DRIVER_PRSB25_H_
+	double sensor_data;
+	ret = spi_master_read_sensor(&sensor_data);
+	sensor_data = round(sensor_data * 1000.0) / 1000.0;
+	snprintf(buf, 10, "%f", sensor_data);
+#elif defined DRIVER_MB1222_H_
+	uint16_t sensor_data;
+	ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
+	snprintf(buf, 10, "%i", sensor_data);
+#endif
+	vTaskDelay(100);
+
+	if (ret == ESP_ERR_TIMEOUT) {
+		ESP_LOGE(TAG, "Sensor Timeout");
+	} else if (ret == ESP_OK) {
+		UA_String sensorValue = UA_String_fromChars(buf);
+		UA_Variant value;
+		UA_Variant_setScalar(&value, &sensorValue, &UA_TYPES[UA_TYPES_STRING]);
+		UA_Server_writeValue(server, nodeId, value);
+
+		UA_String_deleteMembers(&sensorValue);
+	} else if (ret == ESP_ERR_NOT_FOUND) {
+//		ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
+	} else {
+//		ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
+	}
+	UA_free(buf);
+
 }
 

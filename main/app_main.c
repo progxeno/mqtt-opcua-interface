@@ -16,20 +16,23 @@
 #include "freertos/event_groups.h"
 #include "esp_log.h"
 
-#define MBED_TLS_SUB_MQTT
+#define OPCUA_PUB_SUB_PUB
 
 #ifdef ESP_MQTT_TLS
 #include "esp_mqtt_tls.h"
-#include "opcua_pubsub.h"
 #elif defined MBED_TLS_MQTT
 #include "mbedtls_mqtt.h"
 #elif defined OPCUA_PUB_SUB
 #include "opcua_pubsub.h"
 #elif defined OPCUA_SERVER
 #include "opcua_server.h"
-#elif defined MBED_TLS_SUB_MQTT
+#elif defined OPCUA_PUB_SUB_PUB
+#include "opcua_pubsub_pub.h"
+#elif defined MQTT_TO_OPCUA_PUBSUB
 #include "mbedtls_sub_mqtt.h"
 #include "opcua_pubsub.h"
+#elif defined OPCUA_PUBSUB_TO_MQTT
+#include "opcua_sub.h"
 //#elif defined LWMQTT
 //	#include "lw_mbedtls_mqtt.h"
 #endif
@@ -49,7 +52,6 @@ static EventGroupHandle_t wifi_event_group;
 TaskHandle_t TaskMQTT;
 TaskHandle_t TaskOPCUA;
 SemaphoreHandle_t xSemaphore = NULL;
-//char ptrTaskList[250];
 
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
@@ -64,32 +66,25 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 			/* Create the semaphore to guard a shared resource.  As we are using
 			 the semaphore for mutual exclusion we create a mutex semaphore
 			 rather than a binary semaphore. */
-#ifdef SRC_IOT_ESP_MQTT_TLS_H_
+#ifdef ESP_MQTT_TLS
 			xTaskCreatePinnedToCore(mqtt_esp_task, "mqtt_esp_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskMQTT, 1);
-//			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 0);
-//			xTaskCreate(&mqtt_esp_task, "mqtt_esp_task", 32768, NULL, 1, NULL);
-#elif defined SRC_IOT_MBEDTLS_MQTT_H_
-
+#elif defined MBED_TLS_MQTT
 			xTaskCreatePinnedToCore(mqtt_mbedtls_task, "mqtt_mbedtls_task", 20000, NULL, tskIDLE_PRIORITY + 1, &TaskMQTT, 1);
-//			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 10000, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 0);
-//			vTaskList(ptrTaskList);
-//			printf("Task  State   Prio    Stack    Num\n");
-//			printf("**********************************\n");
-//			printf(ptrTaskList);
-//			printf("**********************************\n");
-
-//#elif defined SRC_IOT_OPCUA_PUBSUB_H_
+#elif defined OPCUA_PUB_SUB
 //			xTaskCreate(&opcua_pubsub_task, "opcua_pubsub_task", 32768, NULL, 1, NULL);
-#elif defined SRC_IOT_OPC_UA_OPCUA_SERVER_H_
+#elif defined OPCUA_SERVER
 			xTaskCreate(&opcua_server_task, "opcua_server_task", 32768, NULL, 1, NULL);
-#elif defined MBED_TLS_SUB_MQTT
+#elif defined MQTT_TO_OPCUA_PUBSUB
 			vTaskDelay(1000 / portTICK_RATE_MS);
 			xTaskCreatePinnedToCore(opcua_pubsub_task, "opcua_pubsub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
 			vTaskDelay(500 / portTICK_RATE_MS);
 			xTaskCreatePinnedToCore(mqtt_mbedtls_sub_task, "mqtt_mbedtls_sub_task", 10240, NULL, tskIDLE_PRIORITY + 2, &TaskMQTT, 1);
-			ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
-
+#elif defined OPCUA_PUB_SUB_PUB
+			xTaskCreatePinnedToCore(opcua_pubsub_pub_task, "opcua_pubsub_pub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 0);
+#elif defined OPCUA_PUBSUB_TO_MQTT
+			xTaskCreatePinnedToCore(opcua_sub_task, "opcua_pubsub_pub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
 #endif
+
 			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
 			break;
 		case SYSTEM_EVENT_STA_DISCONNECTED:
@@ -124,6 +119,7 @@ static void wifi_init(void)
 	ESP_ERROR_CHECK(esp_wifi_start());
 	ESP_LOGI(TAG, "Waiting for wifi");
 	xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, false, true, portMAX_DELAY);
+	vTaskDelay(500 / portTICK_RATE_MS);
 }
 
 void app_main()
