@@ -16,7 +16,7 @@
 #include "freertos/event_groups.h"
 #include "esp_log.h"
 
-#define OPCUA_PUB_SUB_PUB
+#define OPCUA_PUBSUB_TO_MQTT
 
 #ifdef ESP_MQTT_TLS
 #include "esp_mqtt_tls.h"
@@ -30,11 +30,9 @@
 #include "opcua_pubsub_pub.h"
 #elif defined MQTT_TO_OPCUA_PUBSUB
 #include "mbedtls_sub_mqtt.h"
-#include "opcua_pubsub.h"
+#include "opcua_pub.h"
 #elif defined OPCUA_PUBSUB_TO_MQTT
 #include "opcua_sub.h"
-//#elif defined LWMQTT
-//	#include "lw_mbedtls_mqtt.h"
 #endif
 
 #define MaxQueueSize 1
@@ -82,7 +80,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 #elif defined OPCUA_PUB_SUB_PUB
 			xTaskCreatePinnedToCore(opcua_pubsub_pub_task, "opcua_pubsub_pub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 0);
 #elif defined OPCUA_PUBSUB_TO_MQTT
-			xTaskCreatePinnedToCore(opcua_sub_task, "opcua_pubsub_pub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
+			xTaskCreatePinnedToCore(opcua_sub_task, "opcua_sub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
 #endif
 
 			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);

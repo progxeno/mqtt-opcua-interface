@@ -10,8 +10,8 @@
 #pragma GCC diagnostic ignored "-Wunused-function"
 void mqtt_message_handler(MessageData *md)
 {
-	ESP_LOGI(TAG, "Topic received!: %.*s %.*s", md->topicName->lenstring.len, md->topicName->lenstring.data, md->message->payloadlen,
-				(char* ) md->message->payload);
+//	ESP_LOGI(TAG, "Topic received!: %.*s %.*s", md->topicName->lenstring.len, md->topicName->lenstring.data, md->message->payloadlen,
+//				(char* ) md->message->payload);
 	char TxBuffer[1][MQTT_BUF_SIZE];
 	sprintf(TxBuffer[0], "%.*s count %i\n", md->message->payloadlen, (char*) md->message->payload, it);
 	if (pdTRUE == xQueueSend(MyQueueHandleId, TxBuffer[0], 10) && xSemaphoreTake(xSemaphore, (TickType_t ) 100) == pdTRUE) {
