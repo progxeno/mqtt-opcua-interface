@@ -21,6 +21,9 @@ void opcua_sub_task(void *pvParameter)
 	if (!config->pubsubTransportLayers) {
 		UA_ServerConfig_delete(config);
 	}
+	config->customHostname = UA_STRING("ESP32");
+			UA_String esp32url = UA_String_fromChars("opc.udp://raspberrypi:4840");
+			config->applicationDescription.discoveryUrls = &esp32url;
 	config->pubsubTransportLayers[0] = UA_PubSubTransportLayerUDPMP();
 	config->pubsubTransportLayersSize++;
 
@@ -76,7 +79,10 @@ void subscriptionPollingCallback(UA_Server *server, UA_PubSubConnection *connect
 		 * TODO: Return an error code in 'receive' instead of setting the buf
 		 * length to zero. */
 		buffer.length = 512;
-//		UA_ByteString_clear(&buffer);
+		UA_ByteString_clear(&buffer);
+//		memset(&buffer, 0, (sizeof(UA_ByteString)*buffer.length));
+		printf("bufferlength1: %i",buffer.length);
+
 		return;
 	}
 
@@ -86,21 +92,21 @@ void subscriptionPollingCallback(UA_Server *server, UA_PubSubConnection *connect
 	memset(&networkMessage, 0, sizeof(UA_NetworkMessage));
 	size_t currentPosition = 0;
 	UA_NetworkMessage_decodeBinary(&buffer, &currentPosition, &networkMessage);
-	memset(&buffer, 0, (sizeof(UA_ByteString)*buffer.length));
-//	UA_ByteString_clear(&buffer);
+//	memset(&buffer, 0, (sizeof(UA_ByteString)*buffer.length));
+	UA_ByteString_clear(&buffer);
 
-//	/* Is this the correct message type? */
-//	if (networkMessage.networkMessageType != UA_NETWORKMESSAGE_DATASET)
-//		goto cleanup;
-//
-//	/* At least one DataSetMessage in the NetworkMessage? */
-//	if (networkMessage.payloadHeaderEnabled && networkMessage.payloadHeader.dataSetPayloadHeader.count < 1)
-//		goto cleanup;
+	/* Is this the correct message type? */
+	if (networkMessage.networkMessageType != UA_NETWORKMESSAGE_DATASET)
+		goto cleanup;
+
+	/* At least one DataSetMessage in the NetworkMessage? */
+	if (networkMessage.payloadHeaderEnabled && networkMessage.payloadHeader.dataSetPayloadHeader.count < 1)
+		goto cleanup;
 
 	/* Is this a KeyFrame-DataSetMessage? */
 	UA_DataSetMessage *dsm = &networkMessage.payload.dataSetPayload.dataSetMessages[0];
-//	if (dsm->header.dataSetMessageType != UA_DATASETMESSAGE_DATAKEYFRAME)
-//		goto cleanup;
+	if (dsm->header.dataSetMessageType != UA_DATASETMESSAGE_DATAKEYFRAME)
+		goto cleanup;
 
 	/* Loop over the fields and print well-known content types */
 	for (int i = 0; i < dsm->data.keyFrameData.fieldCount; i++) {
@@ -117,5 +123,5 @@ void subscriptionPollingCallback(UA_Server *server, UA_PubSubConnection *connect
 		}
 	}
 
-//	cleanup: UA_NetworkMessage_clear(&networkMessage);
+	cleanup: UA_NetworkMessage_deleteMembers(&networkMessage);
 }

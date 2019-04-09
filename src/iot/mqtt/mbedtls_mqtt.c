@@ -14,113 +14,92 @@ void mqtt_mbedtls_task(void *pvParameters)
 	printf("MQTT running on Core: %i\n", xPortGetCoreID());
 
 	while (1) {
-//		if (xSemaphore != NULL) {
-//			vTaskDelay(100 / portTICK_RATE_MS);
-//
-//			/* See if we can obtain the semaphore.  If the semaphore is not
-//			 available wait 10 ticks to see if it becomes free. */
-//			if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 100 ) == pdTRUE) {
-//				vTaskDelay(10 / portTICK_RATE_MS);
 
 #ifdef SRC_DRIVER_PRSB25_H_
-				ESP_ERROR_CHECK(spi_master_config());
-				double sensor_data;
+		ESP_ERROR_CHECK(spi_master_config());
+		double sensor_data;
 #elif defined DRIVER_MB1222_H_
-				ESP_ERROR_CHECK(i2c_master_init());
-				uint16_t sensor_data;
+		ESP_ERROR_CHECK(i2c_master_init());
+		uint16_t sensor_data;
 #endif
 
-				int ret;
-				char* mqttMsg;
-				char *macAdr = malloc(sizeof(char) * 13);
-				double temp;
-				cJSON* jsonMsg;
-				Network network;
-				MQTTClient client;
-				MQTTPacket_connectData data = MQTTPacket_connectData_initializer
-				;
+		int ret;
+		char* mqttMsg;
+		char *macAdr = malloc(sizeof(char) * 13);
+		double temp;
+		cJSON* jsonMsg;
+		Network network;
+		MQTTClient client;
+		MQTTPacket_connectData data = MQTTPacket_connectData_initializer
+		;
 
-				setMac(macAdr);
-				ESP_LOGI(TAG, "Start MQTT Task ...");
+		setMac(macAdr);
+		ESP_LOGI(TAG, "Start MQTT Task ...");
 
-				NetworkInit(&network);
-				network.websocket = MQTT_WEBSOCKET;
+		NetworkInit(&network);
+		network.websocket = MQTT_WEBSOCKET;
 
-				configureClient(&data, macAdr);
-				startClient(&client, &network, &data);
-				sendOnlineMsg(client, macAdr);
-				ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
+		configureClient(&data, macAdr);
+		startClient(&client, &network, &data);
+		sendOnlineMsg(client, macAdr);
+		ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
 
-//				xSemaphoreGive(xSemaphore);
-				while (1) {
-					vTaskDelay(10 / portTICK_RATE_MS);
+		while (1) {
+			vTaskDelay(10 / portTICK_RATE_MS);
 
-					/* See if we can obtain the semaphore.  If the semaphore is not
-					 available wait 10 ticks to see if it becomes free. */
-//					if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 10 ) == pdTRUE) {
-
-						jsonMsg = cJSON_CreateObject();
-						temp = round(((temprature_sens_read() - 32) / 1.8) * 100.0) / 100.0;
+			jsonMsg = cJSON_CreateObject();
+			temp = round(((temprature_sens_read() - 32) / 1.8) * 100.0) / 100.0;
 #ifdef SRC_DRIVER_PRSB25_H_
-						ret = spi_master_read_sensor(&sensor_data);
-						sensor_data = round(sensor_data * 1000.0) / 1000.0;
+			ret = spi_master_read_sensor(&sensor_data);
+			sensor_data = round(sensor_data * 1000.0) / 1000.0;
 #elif defined DRIVER_MB1222_H_
-						ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
+			ret = i2c_master_read_sensor(I2C_MASTER_NUM, &sensor_data);
 #endif
 
-						cJSON_AddStringToObject(jsonMsg, "ID", macAdr);
-						cJSON_AddNumberToObject(jsonMsg, "Value", sensor_data);
-						cJSON_AddNumberToObject(jsonMsg, "Temperature", temp);
+			cJSON_AddStringToObject(jsonMsg, "ID", macAdr);
+			cJSON_AddNumberToObject(jsonMsg, "Value", sensor_data);
+			cJSON_AddNumberToObject(jsonMsg, "Temperature", temp);
 
-						mqttMsg = cJSON_Print(jsonMsg);
+			mqttMsg = cJSON_Print(jsonMsg);
 
-						MQTTMessage message;
+			MQTTMessage message;
 
-						message.qos = QOS0;
-						message.retained = false;
-						message.dup = false;
-						message.payload = (uint16_t *) mqttMsg;
-						message.payloadlen = strlen(mqttMsg) + 1;
+			message.qos = QOS0;
+			message.retained = false;
+			message.dup = false;
+			message.payload = (uint16_t *) mqttMsg;
+			message.payloadlen = strlen(mqttMsg) + 1;
 
-						if (ret == ESP_ERR_TIMEOUT) {
-							ESP_LOGE(TAG, "I2C Timeout");
-						} else if (ret == ESP_OK) {
-							MQTTPublish(&client, "device/id1/data", &message);
+			if (ret == ESP_ERR_TIMEOUT) {
+				ESP_LOGE(TAG, "I2C Timeout");
+			} else if (ret == ESP_OK) {
+				MQTTPublish(&client, "device/id1/data", &message);
 #ifdef SRC_DRIVER_PRSB25_H_
 //							vTaskList(ptrTaskList);
 //							printf("Task  State   Prio    Stack    Num\n");
 //							printf("**********************************\n");
 //							printf(ptrTaskList);
 //							printf("**********************************\n");
-							printf("Sensordata: %.3f\n", sensor_data);
+				printf("Sensordata: %.3f\n", sensor_data);
 #elif defined DRIVER_MB1222_H_
-							printf("Sensordata: %i\n", sensor_data);
+				printf("Sensordata: %i\n", sensor_data);
 #endif
 
-						} else if (ret == ESP_ERR_NOT_FOUND) {
-							//ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
-						} else {
-							//ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
-						}
+			} else if (ret == ESP_ERR_NOT_FOUND) {
+				//ESP_LOGW(TAG, "%s: CRC check Failed ", esp_err_to_name(ret));
+			} else {
+				//ESP_LOGW(TAG, "%s: No ack, sensor not connected. ", esp_err_to_name(ret));
+			}
 
-						//ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
-						cJSON_Delete(jsonMsg);
-						free(mqttMsg);
-//						xSemaphoreGive(xSemaphore);
-//					} else {
-//						continue;
-//					}
-				}
+			//ESP_LOGI(TAG, "[APP] Free memory in Loop: %d bytes", esp_get_free_heap_size());
+			cJSON_Delete(jsonMsg);
+			free(mqttMsg);
+		}
 
-//			} else {
-//				continue;
-//			}
-//		} else {
-//			continue;
-//		}
 	}
 	vTaskDelete(NULL);
 }
+
 void startClient(MQTTClient *client, Network *network, MQTTPacket_connectData *data)
 {
 	int ret;
@@ -140,7 +119,6 @@ void startClient(MQTTClient *client, Network *network, MQTTPacket_connectData *d
 //			printf(ptrTaskList);
 //			printf("**********************************\n");
 			retval = NetworkConnect(network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
-
 
 		}
 		if (retval != 0) {

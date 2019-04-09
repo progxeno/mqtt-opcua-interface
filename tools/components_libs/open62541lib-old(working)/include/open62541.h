@@ -12610,8 +12610,7 @@ UA_copy(const void *src, void *dst, const UA_DataType *type);
  *
  * @param p The memory location of the variable
  * @param type The datatype description of the variable */
-void UA_EXPORT UA_clear(void *p, const UA_DataType *type);
-#define UA_deleteMembers(p, type) UA_clear(p, type)
+void UA_EXPORT UA_deleteMembers(void *p, const UA_DataType *type);
 
 /* Frees a variable and all of its content.
  *
@@ -15965,11 +15964,6 @@ UA_ByteString_copy(const UA_ByteString *src, UA_ByteString *dst) {
 static UA_INLINE void
 UA_ByteString_deleteMembers(UA_ByteString *p) {
     UA_deleteMembers(p, &UA_TYPES[UA_TYPES_BYTESTRING]);
-}
-
-static UA_INLINE void
-UA_ByteString_clear(UA_ByteString *p) {
-    UA_clear(p, &UA_TYPES[UA_TYPES_BYTESTRING]);
 }
 
 static UA_INLINE void

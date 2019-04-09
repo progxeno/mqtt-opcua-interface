@@ -80,7 +80,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 #elif defined OPCUA_PUB_SUB_PUB
 			xTaskCreatePinnedToCore(opcua_pubsub_pub_task, "opcua_pubsub_pub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 0);
 #elif defined OPCUA_PUBSUB_TO_MQTT
-			xTaskCreatePinnedToCore(opcua_sub_task, "opcua_sub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
+			xTaskCreatePinnedToCore(opcua_sub_task, "opcua_sub_task", 32768, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
 #endif
 
 			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);

@@ -29,6 +29,27 @@ void opcua_pubsub_pub_task(void *pvParameter)
 		config->applicationDescription.discoveryUrls = &esp32url;
 		config->pubsubTransportLayers[0] = UA_PubSubTransportLayerUDPMP();
 		config->pubsubTransportLayersSize++;
+		config->serverCertificate = UA_BYTESTRING("-----BEGIN CERTIFICATE-----\n"
+		"MIIDfDCCAmSgAwIBAgIJAIImgnWzD+pUMA0GCSqGSIb3DQEBCwUAMFMxETAPBgNV\n"
+		"BAMMCDEwLjAuMC4xMQwwCgYDVQQKDANTTUMxDDAKBgNVBAsMA0dUQzEiMCAGCSqG\n"
+		"SIb3DQEJARYTbWlvc2dhLm1hcmlvQHNtYy5kZTAeFw0xOTAxMjExMDI2NTdaFw0z\n"
+		"MjAxMTgxMDI2NTdaMFMxETAPBgNVBAMMCDEwLjAuMC4xMQwwCgYDVQQKDANTTUMx\n"
+		"DDAKBgNVBAsMA0dUQzEiMCAGCSqGSIb3DQEJARYTbWlvc2dhLm1hcmlvQHNtYy5k\n"
+		"ZTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMAOtn/EzzX1GPpyY1Qt\n"
+		"Yto9Z2Mhv4pxaTFocPom3q/wh+30dIpcWGeGXTLpMZ+uhWnowdcKwaIp8CBFFv6H\n"
+		"M5+k1m2o1cybiQ1McO+B5rn6Ybm/3f+8mskz0yTGmiN4JZ5lKDWpoEov0yhNZA23\n"
+		"Z733qsns2ah/wAKCbV1NlBVf7EYCItpcE7Hr2OTzID+yPtMZR4oZ0AvX365+7U/z\n"
+		"2rWx0JAMWY3udA8rbDM4WYpxT3XNUKdKv9leOvFp2DRgBUkQPvKoOJhg0BrJrafN\n"
+		"t7mcmeGy4wnQF6UYMMCvGqXtSGL+qZ/YeCo8e5yJe7nphGHLOvNmNVK+of6nYFMg\n"
+		"ob8CAwEAAaNTMFEwHQYDVR0OBBYEFBkijOy+J5le0nF44xFpG9dahefYMB8GA1Ud\n"
+		"IwQYMBaAFBkijOy+J5le0nF44xFpG9dahefYMA8GA1UdEwEB/wQFMAMBAf8wDQYJ\n"
+		"KoZIhvcNAQELBQADggEBAJqVOboE69ZXSoHOffv+SMLjyUcZihkQgTCyzVQeKoxi\n"
+		"0nb536PX0LvJolYPqMmhTugsGk/pBO1I8h3fOscttQAVFqGlWql2HjC9d1YWIt31\n"
+		"NJnIpenf4r1SU3+Jrlp7DfVvISecG60l9HHcOkEcNvqH0PYjzZlMhPMsb1K+qXj9\n"
+		"7UNJY6F1ES0hQY4JSShF/aaLJ1E6Yn2Wvc9hbkpz3Aje/Wy+QCGtb03I+vNd6pOC\n"
+		"9iZuWVpUVi4E/fSfG1yo9wGbkO1yMqgcjAdLhHhZLnyGq/QeVXbRuIJvStrKhBDQ\n"
+		"ouNFgdU9OG1Qb0C0fi3xp3CPK1jyO1xE2DMuEjHUm5A=\n"
+		"-----END CERTIFICATE-----\n");
 		UA_Server *server = UA_Server_new(config);
 #ifdef SRC_DRIVER_PRSB25_H_
 		ESP_ERROR_CHECK(spi_master_config());
@@ -123,7 +144,9 @@ void addWriterGroup(UA_Server *server, UA_NodeId parentConnection, UA_String nam
 	writerGroupConfig.name = name;
 	writerGroupConfig.publishingInterval = interval;
 	writerGroupConfig.enabled = UA_FALSE;
+	writerGroupConfig.writerGroupId = 100;
 	writerGroupConfig.encodingMimeType = UA_PUBSUB_ENCODING_UADP;
+
 	UA_Server_addWriterGroup(server, parentConnection, &writerGroupConfig, assignedId);
 }
 
