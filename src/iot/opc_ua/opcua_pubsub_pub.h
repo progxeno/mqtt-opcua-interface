@@ -33,7 +33,7 @@ extern "C" {
 #include <lwip/sockets.h>
 #include "open62541.h"
 
-#define MB_1222
+#define PRSB_25
 
 #ifdef PRSB_25
 #include "prsb25.h"

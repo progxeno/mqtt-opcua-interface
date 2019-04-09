@@ -33,9 +33,10 @@
 #include "opcua_pub.h"
 #elif defined OPCUA_PUBSUB_TO_MQTT
 #include "opcua_sub.h"
+#include "mbedtls_pub_mqtt.h"
 #endif
 
-#define MaxQueueSize 1
+#define MaxQueueSize 3
 #define MaxElementsPerQueue 500
 xQueueHandle MyQueueHandleId;
 
@@ -80,7 +81,11 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 #elif defined OPCUA_PUB_SUB_PUB
 			xTaskCreatePinnedToCore(opcua_pubsub_pub_task, "opcua_pubsub_pub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 0);
 #elif defined OPCUA_PUBSUB_TO_MQTT
-			xTaskCreatePinnedToCore(opcua_sub_task, "opcua_sub_task", 32768, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
+			vTaskDelay(1000 / portTICK_RATE_MS);
+			xTaskCreatePinnedToCore(opcua_sub_task, "opcua_sub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
+			vTaskDelay(500 / portTICK_RATE_MS);
+			xTaskCreatePinnedToCore(mqtt_mbedtls_pub_task, "mqtt_mbedtls_pub_task", 12800, NULL, tskIDLE_PRIORITY + 1, &TaskMQTT, 1);
+
 #endif
 
 			xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);

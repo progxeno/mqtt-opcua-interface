@@ -432,13 +432,15 @@ extern "C" {
 #endif /* UA_ENABLE_PUBSUB */
 
 #define TAG "OPCUA_PUB_SUB"
-#define MaxQueueSize 1
+#define MaxQueueSize 3
 #define OPC_UA_BUF_SIZE 500
 
 				uint8_t mac[6];
 
 				extern xQueueHandle MyQueueHandleId;
 				extern SemaphoreHandle_t xSemaphore;
+				extern TaskHandle_t TaskMQTT;
+				extern TaskHandle_t TaskOPCUA;
 
 				void opcua_sub_task(void *pvParameter);
 				void subscriptionPollingCallback(UA_Server *server, UA_PubSubConnection *connection);
