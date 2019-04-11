@@ -50,6 +50,7 @@ void opcua_pubsub_pub_task(void *pvParameter)
 		"9iZuWVpUVi4E/fSfG1yo9wGbkO1yMqgcjAdLhHhZLnyGq/QeVXbRuIJvStrKhBDQ\n"
 		"ouNFgdU9OG1Qb0C0fi3xp3CPK1jyO1xE2DMuEjHUm5A=\n"
 		"-----END CERTIFICATE-----\n");
+
 		UA_Server *server = UA_Server_new(config);
 #ifdef SRC_DRIVER_PRSB25_H_
 		ESP_ERROR_CHECK(spi_master_config());
@@ -146,6 +147,7 @@ void addWriterGroup(UA_Server *server, UA_NodeId parentConnection, UA_String nam
 	writerGroupConfig.enabled = UA_FALSE;
 	writerGroupConfig.writerGroupId = 100;
 	writerGroupConfig.encodingMimeType = UA_PUBSUB_ENCODING_UADP;
+	writerGroupConfig.securityMode = 3;
 
 	UA_Server_addWriterGroup(server, parentConnection, &writerGroupConfig, assignedId);
 }
@@ -161,6 +163,7 @@ void addDataSetWriter(UA_Server *server, UA_NodeId parentWriterGroup, UA_NodeId 
 	memset(&dataSetWriterConfig, 0, sizeof(dataSetWriterConfig));
 	dataSetWriterConfig.name = name;
 	dataSetWriterConfig.keyFrameCount = 10;
+
 	UA_Server_addDataSetWriter(server, parentWriterGroup, connectedPDS, &dataSetWriterConfig, assignedId);
 }
 

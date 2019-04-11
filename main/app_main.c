@@ -83,8 +83,10 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 #elif defined OPCUA_PUBSUB_TO_MQTT
 			vTaskDelay(1000 / portTICK_RATE_MS);
 			xTaskCreatePinnedToCore(opcua_sub_task, "opcua_sub_task", 16384, NULL, tskIDLE_PRIORITY + 1, &TaskOPCUA, 1);
+//			sys_thread_new("opcua_sub_task",opcua_sub_task,NULL, 16384,1);
 			vTaskDelay(500 / portTICK_RATE_MS);
 			xTaskCreatePinnedToCore(mqtt_mbedtls_pub_task, "mqtt_mbedtls_pub_task", 12800, NULL, tskIDLE_PRIORITY + 1, &TaskMQTT, 1);
+//			sys_thread_new("mqtt_mbedtls_pub_task",mqtt_mbedtls_pub_task,NULL, 12800,1);
 
 #endif
 

@@ -55,16 +55,18 @@ void opcua_sub_task(void *pvParameter)
 					UA_StatusCode rv = connection->channel->regist(connection->channel, NULL);
 					if (rv == UA_STATUSCODE_GOOD) {
 						UA_UInt64 subscriptionCallbackId;
-						UA_Server_addRepeatedCallback(server, (UA_ServerCallback) subscriptionPollingCallback, connection, 100,
+						UA_Server_addRepeatedCallback(server, (UA_ServerCallback) subscriptionPollingCallback, connection, 10,
 														&subscriptionCallbackId);
 					} else {
 						UA_LOG_WARNING(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "register channel failed: %s!", UA_StatusCode_name(rv));
 					}
 				}
-				xSemaphoreGive(xSemaphore);
-				vTaskDelay(500 / portTICK_RATE_MS);
+
 				UA_Boolean running = UA_TRUE;
 				retval |= UA_Server_run(server, &running);
+				xSemaphoreGive(xSemaphore);
+				vTaskDelay(100 / portTICK_RATE_MS);
+
 				UA_Server_delete(server);
 				UA_ServerConfig_delete(config);
 			} else {
@@ -86,7 +88,10 @@ void subscriptionPollingCallback(UA_Server *server, UA_PubSubConnection *connect
 				UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_SERVER, "Message buffer allocation failed!");
 				return;
 			}
-
+			UA_DateTimeStruct receivedTime = UA_DateTime_toStruct(UA_DateTime_now());
+			UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "Message content: [DateTime] \t"
+											"Received date: %02i-%02i-%02i Received time: %02i:%02i:%02i",
+											receivedTime.year, receivedTime.month, receivedTime.day, receivedTime.hour, receivedTime.min, receivedTime.sec);
 			/* Receive the message. Blocks for 5ms */
 			UA_StatusCode retval = connection->channel->receive(connection->channel, &buffer, NULL, 5);
 			if (retval != UA_STATUSCODE_GOOD || buffer.length == 0) {
@@ -97,6 +102,8 @@ void subscriptionPollingCallback(UA_Server *server, UA_PubSubConnection *connect
 				 * length to zero. */
 				buffer.length = 512;
 				UA_ByteString_clear(&buffer);
+				xSemaphoreGive(xSemaphore);
+				vTaskDelay(100 / portTICK_RATE_MS);
 
 				return;
 			}
@@ -126,33 +133,35 @@ void subscriptionPollingCallback(UA_Server *server, UA_PubSubConnection *connect
 			/* Loop over the fields and print well-known content types */
 			for (int i = 0; i < dsm->data.keyFrameData.fieldCount; i++) {
 				const UA_DataType *currentType = dsm->data.keyFrameData.dataSetFields[i].value.type;
-				if (currentType == &UA_TYPES[UA_TYPES_BYTE]) {
-					UA_Byte value = *(UA_Byte *) dsm->data.keyFrameData.dataSetFields[i].value.data;
-					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "Message content: [Byte] \tReceived data: %i", value);
+				if (currentType == &UA_TYPES[UA_TYPES_STRING]) {
+					UA_String value = *(UA_String *) dsm->data.keyFrameData.dataSetFields[i].value.data;
+					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "Message content: [String] \tReceived data: \"%.*s\"", value.length,
+								value.data);
+					sprintf(TxBuffer[i], "%.*s", value.length, value.data);
 				} else if (currentType == &UA_TYPES[UA_TYPES_DATETIME]) {
 					UA_DateTime value = *(UA_DateTime *) dsm->data.keyFrameData.dataSetFields[i].value.data;
 					UA_DateTimeStruct receivedTime = UA_DateTime_toStruct(value);
 					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "Message content: [DateTime] \t"
 								"Received date: %02i-%02i-%02i Received time: %02i:%02i:%02i",
 								receivedTime.year, receivedTime.month, receivedTime.day, receivedTime.hour, receivedTime.min, receivedTime.sec);
-				} else if (currentType == &UA_TYPES[UA_TYPES_STRING]) {
-					UA_String value = *(UA_String *) dsm->data.keyFrameData.dataSetFields[i].value.data;
-					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "Message content: [String] \tReceived data: \"%.*s\"", value.length,
-								value.data);
-					sprintf(TxBuffer[i], "%.*s\n", value.length, value.data);
-					vTaskDelay(10);
+				} else if (currentType == &UA_TYPES[UA_TYPES_BYTE]) {
+					UA_Byte value = *(UA_Byte *) dsm->data.keyFrameData.dataSetFields[i].value.data;
+					UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "Message content: [Byte] \tReceived data: %i", value);
 				}
 			}
 
-//			printf(" ID: %s\n", TxBuffer[2]);
-//			printf(" Value: %s\n", TxBuffer[1]);
-//			printf(" Temperature: %s\n", TxBuffer[0]);
 
-			if (pdTRUE == xQueueSend(MyQueueHandleId, &TxBuffer, 100)) {
-				printf("OPCUA_SUB: Successfully sent the data\n");
-				xSemaphoreGive(xSemaphore);
+			for (int i = 0; i <= 2; i++) {
+				xQueueSend(MyQueueHandleId, TxBuffer[i], (TickType_t ) 10);
+				vTaskDelay(10);
 			}
-			vTaskDelay(10);
+			xSemaphoreGive(xSemaphore);
+			vTaskDelay(20);
+//			if (pdTRUE == xQueueSend(MyQueueHandleId, &TxBuffer, 100)) {
+//				printf("OPCUA_SUB: Successfully sent the data\n");
+//				xSemaphoreGive(xSemaphore);
+//			}
+//			vTaskDelay(100);
 			cleanup: UA_NetworkMessage_deleteMembers(&networkMessage);
 		}
 	}

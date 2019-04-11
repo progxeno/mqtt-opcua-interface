@@ -19,7 +19,6 @@ void mqtt_mbedtls_pub_task(void *pvParameters)
 			 available wait 10 ticks to see if it becomes free. */
 			if (xSemaphoreTake(xSemaphore, (TickType_t) 10) == pdTRUE) {
 
-				int ret;
 				char* mqttMsg;
 				char *macAdr = malloc(sizeof(char) * 13);
 				cJSON* jsonMsg;
@@ -44,15 +43,18 @@ void mqtt_mbedtls_pub_task(void *pvParameters)
 					char RxBuffer[MaxQueueSize][MQTT_BUF_SIZE];
 					/* See if we can obtain the semaphore.  If the semaphore is not
 					 available wait 10 ticks to see if it becomes free. */
-					if (pdTRUE == xQueueReceive(MyQueueHandleId, &RxBuffer, 100) && xSemaphoreTake(xSemaphore, (TickType_t) 100) == pdTRUE) {
-						printf("recieved ID: %s\n", RxBuffer[2]);
-						printf("recieved Value: %s\n", RxBuffer[1]);
-						printf("recieved Temperature: %s\n", RxBuffer[0]);
+					if (xSemaphoreTake(xSemaphore, (TickType_t) 50) == pdTRUE) {	//pdTRUE == xQueueReceive(MyQueueHandleId, &RxBuffer, 100) &&
+						for (int i = 0; i <= 2; i++) {
+							vTaskDelay(10);
+							xQueueReceive(MyQueueHandleId, RxBuffer[i], ( TickType_t ) 100);
+						}
 
+						double value = atof(RxBuffer[1]);
+						double temperature = atof(RxBuffer[0]);
 						jsonMsg = cJSON_CreateObject();
 						cJSON_AddStringToObject(jsonMsg, "ID", RxBuffer[2]);
-						cJSON_AddStringToObject(jsonMsg, "Value", RxBuffer[1]);
-						cJSON_AddStringToObject(jsonMsg, "Temperature", RxBuffer[0]);
+						cJSON_AddNumberToObject(jsonMsg, "Value", value);
+						cJSON_AddNumberToObject(jsonMsg, "Temperature", temperature);
 
 						mqttMsg = cJSON_Print(jsonMsg);
 
@@ -68,13 +70,12 @@ void mqtt_mbedtls_pub_task(void *pvParameters)
 						cJSON_Delete(jsonMsg);
 						free(mqttMsg);
 						xSemaphoreGive(xSemaphore);
+						vTaskDelay(20);
 					} else {
 						xSemaphoreGive(xSemaphore);
 						continue;
 					}
 				}
-				vTaskDelay(10 / portTICK_RATE_MS);
-
 			} else {
 				xSemaphoreGive(xSemaphore);
 				continue;
@@ -96,11 +97,6 @@ void startClient(MQTTClient *client, Network *network, MQTTPacket_connectData *d
 			i++;
 			ESP_LOGW(TAG, "Connection failed: %i ... Reconnecting", retval);
 			ESP_LOGW(TAG, "Attempt %i", i);
-//			vTaskList(ptrTaskList);
-//			printf("Task  State   Prio    Stack    Num\n");
-//			printf("**********************************\n");
-//			printf(ptrTaskList);
-//			printf("**********************************\n");
 			retval = NetworkConnect(network, CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
 
 		}

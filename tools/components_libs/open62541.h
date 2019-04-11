@@ -136,7 +136,7 @@
 #ifdef OPEN62541_FEERTOS_USE_OWN_MEM
 # define UA_free vPortFree
 //# define UA_malloc pvPortMalloc
-# define UA_malloc calloc 
+# define UA_malloc calloc
 # define UA_calloc pvPortCalloc
 # define UA_realloc pvPortRealloc
 #else
