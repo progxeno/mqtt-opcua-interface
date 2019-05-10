@@ -16,7 +16,7 @@
 #include "freertos/event_groups.h"
 #include "esp_log.h"
 
-#define OPCUA_PUBSUB_TO_MQTT
+#define OPCUA_PUB_SUB_PUB
 
 #ifdef ESP_MQTT_TLS
 #include "esp_mqtt_tls.h"
